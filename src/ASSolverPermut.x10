@@ -67,13 +67,21 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	var alMinJ : Int;
 	
 	/**
+	 * Optimization mode - SMTI 
+	 */
+	val bestConf = new Rail[Int](size, 0n);
+	var bestCostSMTI:Int = x10.lang.Int.MAX_VALUE;
+	var bestnbBP:Int = x10.lang.Int.MAX_VALUE;
+	var bestnbSG:Int = x10.lang.Int.MAX_VALUE;
+	
+	/**
 	 *  solve( csp : SMTIModel ) : Int
 	 *  Solve a csp Problem through the Adaptive Search algoritm
 	 * 	@param csp The model of the problem to solve
 	 *  @return the final total cost after solving process (If success returns 0)
 	 */ 
 	public def solve( csp_ : SMTIModel{self.sz==this.sz} ) : Int { //
-		
+		var firstSM:Int = 0n;
 		var nb_in_plateau:Int; 
 		
 		csp_.setParameters(solverP);
@@ -81,8 +89,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		//nb_var_to_reset = (((size * solverP.resetPercent) + (100) - 1) / (100));
 		if (solverP.nbVarToReset == -1n){
 			solverP.nbVarToReset = (((size * solverP.resetPercent) + (100n) - 1n) / (100n));
-			if (solverP.nbVarToReset < 2n)
-			{
+			if (solverP.nbVarToReset < 2n){
 				solverP.nbVarToReset = 2n;
 				Logger.debug(()=>{"increasing nb var to reset since too small, now = "+ solverP.nbVarToReset});
 			}
@@ -112,15 +119,23 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot = 0n; 
 		
 		
+		
 		total_cost = csp_.costOfSolution(1n);
 		best_cost = total_cost;
 		var best_of_best: Int = x10.lang.Int.MAX_VALUE ;
-		
 		//var slope : Int = 0;
 		//var antcost : Int = total_cost;
 		
+		// Copy the first match to bestConf vector
+		Rail.copy(csp_.getVariables(),bestConf);
+		bestCostSMTI = total_cost;
+		bestnbBP = csp_.getnbBP();
+		bestnbSG = csp_.getnbSingles();
+		//Console.OUT.println("initial bestCost="+bestCostSMTI);
+		
 		while( total_cost != 0n ){
-			if (best_cost < best_of_best)  best_of_best = best_cost;
+			if (best_cost < best_of_best)
+				best_of_best = best_cost;
 	
 			nbIter++;
 	  
@@ -174,8 +189,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 				mark(max_i) = nbSwap + solverP.freezeLocMin; //Mark(max_i, freeze_loc_min);
 				//Console.OUT.println("nb_var_marked "+nb_var_marked+"solverP.resetLimit= "+solverP.resetLimit);
 	 			if (nb_var_marked + 1 >= solverP.resetLimit)
-	 			{
-	 				
+	 			{				
 	 				// do reset or get some vector from the comm pool
 	 				/*if (random.randomInt(100) < solverP.probChangeVector){
 	 					val result = solverC.getIPVector(csp, total_cost );
@@ -214,6 +228,47 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 			// 	Utils.show("partial sol",csp_.getVariables());
 			//csp_.displaySolution();
 			
+	 		/**
+	 		 *  optimization
+	 		 */
+	 		var cnbBP:Int = csp_.getnbBP(); 
+	 		// if(cnbBP==0n){ //stable marriage (SM)
+	 		// 	if(firstSM == 0n){ //first SM
+	 		// 		firstSM = 1n;
+	 		// 		Rail.copy(csp_.getVariables(),bestConf);
+	 		// 		bestCostSMTI = total_cost;
+	 		// 		bestnbBP = csp_.getnbBP();
+	 		// 		bestnbSG = csp_.getnbSingles();
+	 		// 	}else{
+	 		// 		//both Mbest  and M are stable
+	 		// 		
+	 		// 	}
+	 		// }else{
+	 		// 	if(bestCostSMTI > total_cost){
+	 		// 		// Marriage with small value in the eval function
+	 		// 		Rail.copy(csp_.getVariables(),bestConf);
+	 		// 		bestCostSMTI = total_cost;
+	 		// 		bestnbBP = csp_.getnbBP();
+	 		// 		bestnbSG = csp_.getnbSingles();
+	 		// 	}
+	 		// }
+	 		//Console.OUT.println("bestCost="+bestCostSMTI+" vs "+total_cost);
+	 		if(bestCostSMTI > total_cost){
+	 			Console.OUT.println("new best cost= "+total_cost);
+	 			// Marriage with small value in the eval function
+	 			Rail.copy(csp_.getVariables(),bestConf);
+	 			bestCostSMTI = total_cost;
+	 			bestnbBP = cnbBP;
+	 			bestnbSG = csp_.getnbSingles();
+	 		}else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
+	 			Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
+	 			Rail.copy(csp_.getVariables(),bestConf);
+	 			bestCostSMTI = total_cost;
+	 			bestnbBP = cnbBP;
+	 			bestnbSG = csp_.getnbSingles();
+	 		}
+	 		
+	 		
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
 	 		if (kill)	{
@@ -268,14 +323,24 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbSameVarTot += nbSameVar;
 		nbLocalMinTot += nbLocalMin; 
 		
-		csp_.displaySolution();
+		//csp_.displaySolution();
 		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
+		
+		if (bestCostSMTI == 0n){
+			Console.OUT.println("perfect marriage found ");
+			csp_.displaySolution(bestConf);
+		}else{
+			Console.OUT.println("Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG);
+			csp_.displaySolution(bestConf);
+		}
+		
+		
 		//creating an error
 		//csp_.swapVariables(1n,150n);
 		//csp_.swapVariables(1n,2n);
 		//csp_.variables(1)=2n;
 		
-		return total_cost;
+		return bestCostSMTI;
 	}
 	
 	/**

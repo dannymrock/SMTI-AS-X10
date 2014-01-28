@@ -84,28 +84,37 @@ public class Main {
 			val seed = random.nextLong();
 			val cspGen : ()=>SMTIModel(vectorSz);
 			
-			val mPref = SMTIModel.createPrefs(size as Long, r.nextLong());
-			val wPref = SMTIModel.createPrefs(size as Long, r.nextLong());
+			var mPref:Rail[Rail[Int]]= SMTIModel.createPrefs(size as Long, r.nextLong());
+			var wPref:Rail[Rail[Int]]= SMTIModel.createPrefs(size as Long, r.nextLong());
 			
 			// delete some entries with some probability p1
 			var del:Int = 0n;
-
-			for (m in 0..(size-1)){
-				for (p in 0..(size-1)){
-					if (r.nextInt(100n) <= p1){
-						del++;
-						val dw = mPref(m)(p) - 1n;
-						mPref(m)(p) = 0n;
-						for(k in wPref(dw).range())
-							if (wPref(dw)(k)-1n == m as Int)
-								wPref(dw)(k) = 0n; 	
+			var rep:Int = 1n;
+			
+			while(rep == 1n){
+				Console.OUT.println("Creating SMTI");
+				rep = 0n;
+				mPref = SMTIModel.createPrefs(size as Long, r.nextLong());
+				wPref = SMTIModel.createPrefs(size as Long, r.nextLong());
+				for (m in 0..(size-1)){
+					for (p in 0..(size-1)){
+						if (r.nextInt(100n) <= p1){
+							del++;
+							val dw = mPref(m)(p) - 1n;
+							mPref(m)(p) = 0n;
+							for(k in wPref(dw).range())
+								if (wPref(dw)(k) - 1n == m as Int)
+									wPref(dw)(k) = 0n; 	
+						}
 					}
+					if (del == size){
+						Logger.info(()=>{"Error: all preferences deleted"});
+						//TODO: Restart random problem generator 
+						rep=1n;
+						break;
+					}
+					del = 0n;
 				}
-				if (del == size){
-					Logger.info(()=>{"Error: all preferences deleted"});
-					//TODO: Restart random problem generator 
-				}
-				del = 0n;
 			}
 			
 			// create some ties in entries with some probabilities p2
@@ -113,7 +122,8 @@ public class Main {
 			for (m in 0..(size-1)){
 				noFirst=0n;
 				for (p in 0..(size-1)){
-					if(mPref(m)(p)==0n) continue;
+					if(mPref(m)(p)==0n)
+						continue;
 					if(noFirst==0n){
 						noFirst=1n;
 						continue;
@@ -124,9 +134,9 @@ public class Main {
 					}
 				}
 			}
-			
+			noFirst=0n;
 			for (w in 0..(size-1)){
-				noFirst=0n;
+				
 				for (p in 0..(size-1)){
 					if(mPref(w)(p)==0n) continue;
 					if(noFirst==0n){
@@ -138,9 +148,12 @@ public class Main {
 						wPref(w)(p) *= -1n; 	
 					}
 				}
+				noFirst=0n;
 			}
 			
-			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mPref, wPref) 
+			val mP = mPref;
+			val wP = wPref;
+			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mP, wP) 
 													as SMTIModel(vectorSz);
 			
 			Logger.info(()=>" Start broadcatFlat: solvers().solve function ");

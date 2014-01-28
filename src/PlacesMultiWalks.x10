@@ -116,7 +116,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		time += System.nanoTime();
 		setStats(solvers);
 		//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-		Console.OUT.println("Solution is " + (csp_.verified()? "ok" : "WRONG"));
+		//Console.OUT.println("Solution is " + (csp_.verified()? "ok" : "WRONG"));
 		//csp_.displaySolution();
 	    }
 	}

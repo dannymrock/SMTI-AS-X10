@@ -7,14 +7,15 @@ public class SMTIModel (sz:Long, seed:Long){
 	protected val solverParams = new ASSolverParameters();
 	/** number of blocking pairs
 	 */
-	var nbBlockingPairs:Int;
+	var nbBP:Int;
 	
 	var nbSingles:Int = 0n;
 	
-	val nbBPperMan : Rail[Int];
+	//val nbBPperMan : Rail[Int];
 	val variablesW : Rail[Int];
     val errV : Rail[Int];
     val bp : Rail[Int];
+    val bpw : Rail[Int];
 	
     val menPref : Rail[Rail[Int]];
     
@@ -26,8 +27,8 @@ public class SMTIModel (sz:Long, seed:Long){
 	public def this (lengthProblem : Long , seed : Long, mPrefs:Rail[Rail[Int]],wPrefs:Rail[Rail[Int]]){
 		property(lengthProblem, seed);
 		this.initParameters();
-		nbBlockingPairs = 0n;
-		nbBPperMan = new Rail[Int](length,0n);
+		nbBP = 0n;
+		//nbBPperMan = new Rail[Int](length,0n);
 		variablesW = new Rail[Int](length,0n);
 		errV = new Rail[Int](length,0n);
 		bp = new Rail[Int](length,0n);
@@ -35,6 +36,8 @@ public class SMTIModel (sz:Long, seed:Long){
 		val rr=r, l=length as Int;
 		menPref = mPrefs;
 		womenPref = wPrefs;
+		
+		bpw = new Rail[Int](length, 0n); 
 		
 		revpM = new Rail[Rail[Int]](l, (Long) => new Rail[Int](l,0n));
 		revpW = new Rail[Rail[Int]](l, (Long) => new Rail[Int](l,0n));
@@ -87,7 +90,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.freezeSwap = 0n;
 		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
-		solverParams.restartLimit = 1000000000n;
+		solverParams.restartLimit = 50000n;
 		solverParams.restartMax = 10n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
@@ -102,19 +105,15 @@ public class SMTIModel (sz:Long, seed:Long){
 	 */
 	public def blockingPairError(w:Int, pw:Int, m:Int) : Int {
 		var err:Int ;
-		if (pw == 0n){ //w is single
-			err = 1n;    //min distance
-			//err = length;//max distance
-		}else{
-			val lvC = revpW(w-1)(pw-1);
-			val lvD = revpW(w-1)(m-1);
-			if (lvC == 0n) 
-				err=length;
-			else if (lvD == 0n) 
-				err=0n;
-			else
-				err = revpW(w-1)(pw-1) - revpW(w-1)(m-1);
-		}
+		val lvC = revpW(w-1)(pw-1);
+		val lvD = revpW(w-1)(m-1);
+		if (lvC == 0n)  		//current assignment of w (pw) is invalid, not present in Wprefs 
+			err = length;
+		else if (lvD == 0n) 	// m is not present in the preferences of w
+			err = 0n;
+		else
+			err = lvC - lvD;	// computing distance between current and desired assignment
+		
 		if (err < 0n)		/* (m,w) is a BP (blocking pair) */
 			err = 0n;
 		
@@ -138,77 +137,86 @@ public class SMTIModel (sz:Long, seed:Long){
 	 * 	@return cost
 	 */
      public def costOfSolution( shouldBeRecorded : Int ) : Int {	
-         var m1:Int, w:Int;
-         var j:Int;
+         var w:Int;
          var pm:Int = 0n;
          var pw:Int = 0n; //w_of_m, m_of_w;
          var r:Int = 0n;
        
-         //errV.clear();
-         variablesW.clear();
-         for (m in variables.range()){
-        	 //Console.OUT.println("m="+m);
-        	 if (variables(m)==0n) continue;
-        		 
-             variablesW(variables(m)-1) = m as Int + 1n;
-         }
-         //Utils.show("varW",variablesW);
          
-         // verify BP for each man 
-         for (mi in variables.range()){  // mi -> man index (man number = mi +1)
-        	 //Console.OUT.println("men="+m);
-        	 pm = variables(mi);
-        	 //if pm=0, mi is single
+         variablesW.clear();
+         for (mi in variables.range()){
+        	 if (variables(mi)==0n) continue;
+        	 variablesW(variables(mi)-1) = mi as Int + 1n;
+         }
+         var singles:Int = 0n;
+         
+         // verify existence of undomminated BP's for each man 
+         for (mi in variables.range()){  // mi -> man index (man number = mi + 1)
+        	 pm = variables(mi); // pm current match of mi (if pm=0, mi is single)
         	 
         	 var bpM:Int = -1n;		/* NB: -1 to avoid false positive in the test of Cost_If_Swap */
+        	 var bpW:Int = -1n;
         	 var e:Int = 0n; 	 	
-        	 var bflag:Int = 0n;
+        	 var bF:Int = 0n;
+        	 var singleF:Int = 0n;
+        	 var prefPM:Int = -1n; //m's current match level of preference  
         	 
-        	 
-        	 // verify if m-pm is not a valid match
-        	 if (revpM(mi)(pm-1n)==0n){
-        		e = 1n;
-        		errV(mi) = e;
-        		continue;
+        	 if (pm == 0n){ // verify if m-pm is not a valid match or is single
+        		singleF = 1n;
+        		prefPM = length; //put some value
+        		singles++;
+        	 }else if(revpM(mi)(pm-1n)==0n ){
+        		 singleF = 1n;
+        		 prefPM = length; //put some value
+        		 singles++;
+        	 } else{ // m has a valid assignment pm
+        		 singleF = 0n;
+        		 prefPM = revpM(mi)(pm-1n);
         	 }
         	 
-        	 for(li in menPref(mi).range()){ //li level index
-        		 w = Math.abs(menPref(mi)(li));
-        		 if (w != 0n){
-        			 if(w == pm) 
-        				 bflag=1n; // w is the current match check if there is other 
-        			 else{
-        				 pw = variablesW(w-1);
-        				 e = blockingPairError(w, pw, mi as Int + 1n);
-        			 }
-        			 //Check if there is other pref entries with the same level of preference
-        			 var nw:Int = findNextPref(menPref(mi) as Valuation(sz),li as Int); 
-        			 if (nw >= 0n && bflag == 1n) 	//If nw is 0 means no more entries in pref list
-        				 break;     			 	//If nw is positive means the next one have other level of pref.
-        		 }
-        		 	 
+        	 var prefW:Int = 0n;
+        	 for(li in menPref(mi).range()){ //li level of preference index
+        		 
+        		 w = menPref(mi)(li);
+        		 if (w == 0n) continue;	// entry deleted
+        		 else if(w > 0n)			// new level of preference
+        			 prefW++;
+        		 else						// if w < 0 -> same level of preference (tie) 
+        			 w = Math.abs(w);
+        		 
+        		 if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
+        		 // than the level of pref of pm (current match) "stop condition"
+        		 
+        		 pw = variablesW(w-1); //pw current match of the current W
+        		 
+        		 if (pw == 0n){		// w is single
+        			 //blocking pair (mi+1 and w)
+        			 e = length;
+        			 bpW = w;
+        		 }else{ 
+        			 // Verify if w prefers m to pw
+        			 e = blockingPairError(w, pw, mi as Int + 1n);
+        		 }      		 	 
         		 
         		 if (e > 0n){
         			 bpM = pw; // if pw is 0 the woman bp is single
         			 r++;              /* count the errors (number of BP) */
         			 break; 			//only consider undominated BP
         		 }
-        		 
-        		 if(li == length-1 && bflag==0n){
-        			 //last element and pm was not found in preference list
-        			 r++;
-        		 }
-        		 
         	 }
         	 if (shouldBeRecorded != 0n){
         		 errV(mi) = e;
         		 bp(mi) = bpM;
+        		 bpw(mi) = bpW;
+        		 nbBP = r;
+        		 nbSingles = singles;
         		 //val eval=e;
         		 //val bpval=bpM;
         		 //Logger.info(()=>"error="+eval+" bp="+bpval);
         	 }
          }
-         return r+nbSingles;	
+         //Console.OUT.println("nb BP= "+r+" nb Singles="+nbSingles);
+         return r+singles;	
      }
 	
 	/** 
@@ -229,7 +237,16 @@ public class SMTIModel (sz:Long, seed:Long){
 	// }
 	
 	public def nextJ(i:Int, j:Int, exhaustive:Int) : Int {
-		return (j < 0n) ? bp(i) : -1n;
+		if (j >= 0n) return -1n;
+		else{
+			val bpM = bp(i);
+			if (bpM == 0n){
+				// w is single is not assigned to any m, so how to assign it to this variable?
+				return -1n;
+			}
+			return bpM;
+		}
+		//return (j < 0n) ? bp(i) : -1n;
 	}
 	
 	
@@ -248,6 +265,20 @@ public class SMTIModel (sz:Long, seed:Long){
 		Console.OUT.println("\nMatching  m->w:");
 		for (i in variables.range()){
 			Console.OUT.print(i+1+"->"+variables(i)+"   ");
+		}
+		Console.OUT.println(" ");
+	}
+	
+	
+	public def displaySolution(match:Valuation(sz)){
+		
+		Console.OUT.println("\nMatching  m->w:");
+		
+		for (i in match.range()){
+			if(revpM(i)(match(i)-1n)==0n){
+				Console.OUT.print(i+1+"-> 0 ");
+			}else
+				Console.OUT.print(i+1+"->"+variables(i)+"   ");
 		}
 		Console.OUT.println(" ");
 	}
@@ -275,29 +306,75 @@ public class SMTIModel (sz:Long, seed:Long){
 	 */
 
 	public  def verified():Boolean {
-// 		var w:Int, m1:Int;
-// 		var i:Int, j:Int;
-// 		var pm:Int, pw:Int; //w_of_m, m_of_w;
-// 		var r:Int = 0n;
-// 
-// 		variablesW.clear();
-// 		for (m in variables.range())
-// 			variablesW(variables(m)-1) = m as Int + 1n;
-// 		
-// 		for (m in variables.range()){
-// 			pm = variables(m);
-// 			for(i = 0n; (w = menPref(m)(i)) != pm; i++){
-// 				pw = variablesW(w-1);
-// 				for(j = 0n; (m1 = womenPref(w-1)(j)) != pw; j++){
-// 					if ((m1-1n) == m as Int){
-// 						Console.OUT.println("Not stable marriage, blocking pair m: "+m+", w: "+w);
-// 						return false;
-// 					}
-// 				}
-// 				
-// 			}
-// 		}
-		return true;
+		var w:Int;
+		var pm:Int = 0n;
+		var pw:Int = 0n; //w_of_m, m_of_w;
+		var r:Int = 0n;
+		
+		
+		variablesW.clear();
+		for (mi in variables.range()){
+			if (variables(mi)==0n)	continue;
+			variablesW(variables(mi)-1) = mi as Int + 1n;
+		}
+		
+		Console.OUT.println("Solution with "+nbSingles+" singles");
+		nbSingles = 0n;
+		// verify existence of undomminated BP's for each man 
+		for (mi in variables.range()){  // mi -> man index (man number = mi + 1)
+			pm = variables(mi); // pm current match of mi (if pm=0, mi is single)
+			
+			var e:Int = 0n; 	 	
+			var bF:Int = 0n;
+			var singleF:Int = 0n;
+			var prefPM:Int = -1n; //m's current match level of preference  
+			
+			if (pm == 0n){ // verify if m-pm is not a valid match or is single
+				singleF = 1n;
+				prefPM = length; //put some value
+				nbSingles++;
+				Console.OUT.println("m= "+ mi+1n +" is single");
+			}else if( revpM(mi)(pm-1n)==0n ){
+				singleF = 1n;
+				prefPM = length; //put some value
+				nbSingles++;
+				Console.OUT.println("m= "+ mi+1n +" w= "+pm+"is not a valid match");
+			} else{ // m has a valid assignment pm
+				singleF = 0n;
+				prefPM = revpM(mi)(pm-1n);
+			}
+			
+			var prefW:Int = 0n;
+			for(li in menPref(mi).range()){ //li level of preference index
+				
+				w = menPref(mi)(li);
+				if (w == 0n) continue;	// entry deleted
+				else if(w > 0n)			// new level of preference
+					prefW++;
+				else						// if w < 0 -> same level of preference (tie) 
+					w = Math.abs(w);
+				
+				if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
+				// than the level of pref of pm (current match) "stop condition"
+				
+				pw = variablesW(w-1); //pw current match of the current W
+				
+				if (pw == 0n){		// w is single
+					//blocking pair (mi+1 and w)
+					e = length;
+					Console.OUT.println("find blocking pair m= "+mi+1n+" w= "+w);
+				}else{ 
+					// Verify if w prefers m to pw
+					e = blockingPairError(w, pw, mi as Int + 1n);
+				}      		 	 
+				
+				if (e > 0n){
+					r++;              /* count the errors (number of BP) */
+					break; 			//only consider undominated BP
+				}
+			}
+		}
+		return (r + nbSingles == 0n) ? true : false;
 	}
 	
 	
@@ -384,6 +461,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def swapVariables(i:Int, j:Int):void{
+		//Console.OUT.println("swap func i: "+i+" j: "+j);
 		val x = variables(i);
 		variables(i) = variables(j); 
 		variables(j) = x;
@@ -426,35 +504,43 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def reset ( var n : Int, totalCost : Int ) : Int {	
-		var i:Int, j:Int;
+ 		var i:Int, j:Int;
 		var maxi:Int = findMax(-1n);	/* find max */
-		var bpMaxi:Int = bp(maxi);
+		var bpMaxi:Int= (maxi >= 0n ?  bp(maxi): -1n);
 		var otheri:Int;
 		var nbErr:Int = totalCost; /* the cost is the number of errors (ie. BP) */
 
-		//Console.OUT.println("swap "+maxi+" y "+bpMaxi );
-		if (bpMaxi != 0n)
-			swapVariables(maxi, bpMaxi -1n);
-		else{
-			variables(maxi) = 0n; //man maxi is now single
-			nbSingles++;
-		}
+		if (bpMaxi > 0n){
+ 			swapVariables(maxi, bpMaxi -1n);
+ 		}else{
+ 			//variables(maxi) = 0n; //man maxi is now single
+ 		}
 
-// 		/* find second max if possible (random is to avoid to be trapped in the same local min) */
-// 
-// 		if (nbErr > 1n && r.randomDouble() < 0.98 && (otheri = findMax(bpMaxi)) >= 0n)
-// 			swapVariables(otheri, bp(otheri)-1n);
-// 		else {
-// 			i = r.randomInt(length);
-// 			j = r.randomInt(length);
-// 			swapVariables(i, j);
-// 		}
+ 		/* find second max if possible (random is to avoid to be trapped in the same local min) */
+		if (nbErr > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(bpMaxi)) >= 0n){
+ 			if (bp(otheri) > 0n){
+ 				swapVariables(otheri, (bp(otheri)-1n));
+ 			}
+ 		}
+ 		else {
+			i = r.randomInt(length);
+			j = r.randomInt(length);
+			swapVariables(i, j);
+		}
 		return -1n;
 	}
 	
 	
 	public def getVariables():Valuation(sz){
 		return variables;
+	}
+	
+	public def getnbSingles():Int{
+		return nbSingles;
+	}
+	
+	public def getnbBP():Int{
+		return nbBP;
 	}
 }
 
