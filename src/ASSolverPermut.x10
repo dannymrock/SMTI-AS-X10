@@ -209,8 +209,10 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 				//slope = antcost - total_cost;
 				//antcost = total_cost;
 				//Console.OUT.println("slope in "+here.id+" : "+slope+ " total cost : "+total_cost);
-			};
+			}
 	 		
+			// 	Utils.show("partial sol",csp_.getVariables());
+			//csp_.displaySolution();
 			
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
@@ -238,7 +240,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		        }	
 	 		        //Console.OUT.println("Print Vectors("+here.id+") :");
 	 		        //myComm.printVectors();
-	 		        //Main.show("Vector ",csp.variables);
+	 		        
 	 		        
 	 		}
 	 		
@@ -266,7 +268,8 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbSameVarTot += nbSameVar;
 		nbLocalMinTot += nbLocalMin; 
 		
-		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
+		csp_.displaySolution();
+		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
 		//creating an error
 		//csp_.swapVariables(1n,150n);
 		//csp_.swapVariables(1n,2n);
