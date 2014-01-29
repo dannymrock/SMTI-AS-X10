@@ -77,7 +77,7 @@ public class SMTIModel (sz:Long, seed:Long){
 				revpM(mw)(woman) = level;
 			}
 		}
-		printPreferencesTables();
+		//printPreferencesTables();
 	}
 
 	/** initParameters
@@ -91,7 +91,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
 		solverParams.restartLimit = 50000n;
-		solverParams.restartMax = 10n;
+		solverParams.restartMax = 1n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
@@ -305,7 +305,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	 *  Checks if the solution is valid.
 	 */
 
-	public  def verified():Boolean {
+	public  def verified(match:Valuation(sz)):Boolean {
 		var w:Int;
 		var pm:Int = 0n;
 		var pw:Int = 0n; //w_of_m, m_of_w;
@@ -313,34 +313,30 @@ public class SMTIModel (sz:Long, seed:Long){
 		
 		
 		variablesW.clear();
-		for (mi in variables.range()){
-			if (variables(mi)==0n)	continue;
-			variablesW(variables(mi)-1) = mi as Int + 1n;
+		for (mi in match.range()){
+			if (match(mi)==0n)	continue;
+			variablesW(match(mi)-1) = mi as Int + 1n;
 		}
 		
-		Console.OUT.println("Solution with "+nbSingles+" singles");
-		nbSingles = 0n;
+		//Console.OUT.println("Solution with "+nbSingles+" singles");
+		var singles:Int = 0n;
 		// verify existence of undomminated BP's for each man 
-		for (mi in variables.range()){  // mi -> man index (man number = mi + 1)
-			pm = variables(mi); // pm current match of mi (if pm=0, mi is single)
+		for (mi in match.range()){  // mi -> man index (man number = mi + 1)
+			pm = match(mi); // pm current match of mi (if pm=0, mi is single)
 			
 			var e:Int = 0n; 	 	
 			var bF:Int = 0n;
-			var singleF:Int = 0n;
 			var prefPM:Int = -1n; //m's current match level of preference  
 			
 			if (pm == 0n){ // verify if m-pm is not a valid match or is single
-				singleF = 1n;
 				prefPM = length; //put some value
-				nbSingles++;
+				singles++;
 				Console.OUT.println("m= "+ mi+1n +" is single");
 			}else if( revpM(mi)(pm-1n)==0n ){
-				singleF = 1n;
 				prefPM = length; //put some value
-				nbSingles++;
-				Console.OUT.println("m= "+ mi+1n +" w= "+pm+"is not a valid match");
+				singles++;
+				Console.OUT.println("m= "+ (mi+1n) +" w= "+pm+"is not a valid match (single)");
 			} else{ // m has a valid assignment pm
-				singleF = 0n;
 				prefPM = revpM(mi)(pm-1n);
 			}
 			
@@ -362,15 +358,17 @@ public class SMTIModel (sz:Long, seed:Long){
 				if (pw == 0n){		// w is single
 					//blocking pair (mi+1 and w)
 					e = length;
-					Console.OUT.println("find blocking pair m= "+mi+1n+" w= "+w);
+					Console.OUT.println("blocking pair m= "+(mi+1n)+" w= "+w);
 				}else{ 
 					// Verify if w prefers m to pw
 					e = blockingPairError(w, pw, mi as Int + 1n);
 				}      		 	 
 				
 				if (e > 0n){
-					r++;              /* count the errors (number of BP) */
-					break; 			//only consider undominated BP
+					r++;
+					Console.OUT.println("blocking pair m= "+(mi+1n)+" w= "+w);
+					/* count the errors (number of BP) */
+					//break; 			//only consider undominated BP
 				}
 			}
 		}
@@ -457,7 +455,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		// 		nbSingles++;
 		// 	variables(manI)=w;
 		// }
-		Utils.show("varM",variables);
+		//Utils.show("varM",variables);
 	}
 	
 	public def swapVariables(i:Int, j:Int):void{

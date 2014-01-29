@@ -65,7 +65,7 @@ public interface ParallelSolverI {
     def announceWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)], p:Long):Boolean;
 
     def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int,
-            fr : Int):void;
+            fr : Int, bp:Int, sg:Int):void;
 
     def getPoolData():Maybe[CSPSharedUnit(sz)];
     

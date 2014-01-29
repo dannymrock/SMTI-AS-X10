@@ -102,7 +102,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	cost = solver.solve(csp_);
 		
 		
-	if (cost == 0n){ 
+	//if (cost == 0n){ //TODO: Define a new condition (It's possible to finish without cost=0)
 	    // A solution has been found! Huzzah! 
 	    // Light the candles! Kill the blighters!
 	    val home = here.id;
@@ -116,10 +116,10 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		time += System.nanoTime();
 		setStats(solvers);
 		//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-		//Console.OUT.println("Solution is " + (csp_.verified()? "ok" : "WRONG"));
+		Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
 		//csp_.displaySolution();
 	    }
-	}
+	//}
 	extTime += System.nanoTime();
 	//stats.time = extTime/1e9;
 	//val stats_=stats;
@@ -167,13 +167,15 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val same = solver.nbSameVarTot;
     	val restart = solver.nbRestart;
     	val change = solver.nbChangeV;
+        val bp = solver.bestnbBP;
+        val singles = solver.bestnbSG;
     	
     	at (Place.FIRST_PLACE) async
-    	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n);
+    	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n, bp, singles);
     }
     public def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int, 
-    		fr : Int) {
-    	stats.setStats(co, p, e, t, it, loc, sw, re, sa, rs, ch, fr);
+    		fr : Int, bp:Int, sg:Int) {
+    	stats.setStats(co, p, e, t, it, loc, sw, re, sa, rs, ch, fr, bp, sg);
     	accStats(stats);
     }
     

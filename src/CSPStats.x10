@@ -33,7 +33,15 @@ public class CSPStats{
 	/** Number time to change vector due to communication */ 
 	var change : Int=0n;
 	/** number of restarts */  
-	var forceRestart : Int=0n;
+	var forceRestart:Int = 0n;
+    /** Variables for SMTI */
+    /** number of BP */
+    var bp:Int = 0n;
+    /** number of singles */
+    var singles:Int = 0n;
+    /** acc perfect mariages */
+    var accPM:Int = 0n;
+    
 	 
 	transient val monitor:Monitor  = new Monitor("CSPStats");
 	
@@ -49,7 +57,7 @@ public class CSPStats{
 	 * 	@param rs restarts
 	 */
 	public def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int, 
-			fr : Int){
+			fr : Int, bp:Int, sg:Int){
 	    //monitor.atomicBlock(()=> {
 	    	//Console.OUT.println(here+" set stats for: "+p);
 	        this.cost = co;
@@ -64,6 +72,8 @@ public class CSPStats{
 	        this.restart = rs;
 	        this.change = ch;
 	        this.forceRestart = fr;
+	        this.bp = bp;
+	        this.singles = sg;
 	      //  Unit()
 	    //});
 	}
@@ -84,7 +94,12 @@ public class CSPStats{
 	        this.same += stats.same;
 	        this.restart += stats.restart;
 	        this.change += stats.change;
-	        this.forceRestart += stats.forceRestart; 
+	        this.forceRestart += stats.forceRestart;
+	        this.bp += stats.bp;
+	        this.singles += stats.singles;
+	        
+	        if(stats.bp == 0n && stats.singles == 0n)
+	        	accPM++;
 	       // Unit()
 	   // });
 	}
@@ -94,10 +109,10 @@ public class CSPStats{
 	 * 	@param count Number of this iteration
 	 */
 	public def print(count:Int){
-		val sameIter : Float = (same as Float)/(iters as Float);
+		val sameIter : Float = same /(iters as Float);
 		//val changeF : Float = (change as Float)/(count as Float);
 		Console.OUT.printf("| %3d | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5d | %3d |\n",swaps,reset,sameIter,restart, change, forceRestart);
+		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5d | %3d |\n",swaps,reset,sameIter,restart, bp, singles);
 		
 	}
 
@@ -109,9 +124,10 @@ public class CSPStats{
 	   // val no = no1 as Float;
 		val sameIter : Float = (same as Float)/(iters as Float);
 		val changeF : Float = (change as Float)/(no as Float);
+
 		Console.OUT.printf("| avg | %8.4f | %8d |  N/A  | %8d |",time/no, iters/no, locmin/no);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5.2f | %3d |",swaps/no,reset/no,sameIter,restart/no,
-				changeF, forceRestart/no );
+		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3d | %5.2f |",swaps/no,reset/no,sameIter,restart/no,
+				accPM, singles/(no as float) );
 		
 	}
 }

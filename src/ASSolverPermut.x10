@@ -254,14 +254,14 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		// }
 	 		//Console.OUT.println("bestCost="+bestCostSMTI+" vs "+total_cost);
 	 		if(bestCostSMTI > total_cost){
-	 			Console.OUT.println("new best cost= "+total_cost);
+	 			//Console.OUT.println("new best cost= "+total_cost);
 	 			// Marriage with small value in the eval function
 	 			Rail.copy(csp_.getVariables(),bestConf);
 	 			bestCostSMTI = total_cost;
 	 			bestnbBP = cnbBP;
 	 			bestnbSG = csp_.getnbSingles();
 	 		}else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
-	 			Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
+	 			//Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
 	 			Rail.copy(csp_.getVariables(),bestConf);
 	 			bestCostSMTI = total_cost;
 	 			bestnbBP = cnbBP;
@@ -324,7 +324,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
+		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
 		
 		if (bestCostSMTI == 0n){
 			Console.OUT.println("perfect marriage found ");

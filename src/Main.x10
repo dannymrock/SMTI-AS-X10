@@ -92,7 +92,7 @@ public class Main {
 			var rep:Int = 1n;
 			
 			while(rep == 1n){
-				Console.OUT.println("Creating SMTI");
+				//Console.OUT.println("Creating SMTI");
 				rep = 0n;
 				mPref = SMTIModel.createPrefs(size as Long, r.nextLong());
 				wPref = SMTIModel.createPrefs(size as Long, r.nextLong());
@@ -156,7 +156,7 @@ public class Main {
 			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mP, wP) 
 													as SMTIModel(vectorSz);
 			
-			Logger.info(()=>" Start broadcatFlat: solvers().solve function ");
+			Logger.debug(()=>" Start broadcatFlat: solvers().solve function ");
 			
 			finish for (p in Place.places()) at (p) async{
 				solvers().solve(solvers, cspGen);
