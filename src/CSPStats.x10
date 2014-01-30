@@ -126,8 +126,9 @@ public class CSPStats{
 		val changeF : Float = (change as Float)/(no as Float);
 
 		Console.OUT.printf("| avg | %8.4f | %8d |  N/A  | %8d |",time/no, iters/no, locmin/no);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3d | %5.2f |",swaps/no,reset/no,sameIter,restart/no,
-				accPM, singles/(no as float) );
+		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5.2f | %5.2f | ",swaps/no,reset/no,sameIter,restart/no,
+				bp/(no as float), singles/(no as float));
+		Console.OUT.printf( "%3d |\n",accPM);
 		
 	}
 }

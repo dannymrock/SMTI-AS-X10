@@ -88,9 +88,9 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.probSelectLocMin =  100n; // try ~80%  
 		solverParams.freezeLocMin = 1n;
 		solverParams.freezeSwap = 0n;
-		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
+		solverParams.resetLimit =2n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
-		solverParams.restartLimit = 50000n;
+		solverParams.restartLimit = 100000n;
 		solverParams.restartMax = 1n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
@@ -368,7 +368,7 @@ public class SMTIModel (sz:Long, seed:Long){
 					r++;
 					Console.OUT.println("blocking pair m= "+(mi+1n)+" w= "+w);
 					/* count the errors (number of BP) */
-					//break; 			//only consider undominated BP
+					break; 			//only consider undominated BP
 				}
 			}
 		}
@@ -415,6 +415,97 @@ public class SMTIModel (sz:Long, seed:Long){
 		val prefs = new Rail[Rail[Int]](l, (Long) => new Rail[Int](r.randomPermut(l, 1n)));
 		return prefs;
 	}
+	/**
+	 *  Create SMTI problem 
+	 */
+	static def createPrefs(p1:Int, p2:Int, l:Int, seed:Long,  mP:Rail[Rail[Int]], wP:Rail[Rail[Int]]){
+		val r = new RandomTools(seed);
+		var mPref:Rail[Rail[Int]] = SMTIModel.createPrefs(l as Long, r.randomLong());
+		var wPref:Rail[Rail[Int]] = SMTIModel.createPrefs(l as Long, r.randomLong());
+		val wDel = new Rail[Int](l as Long, 0n);
+		
+		// delete some entries with some probability p1
+		var del:Int = 0n;
+		var rep:Int = 1n;
+		
+		 while(rep == 1n){
+			Console.OUT.println("Creating SMTI");
+			rep = 0n;
+			wDel.clear();
+			mPref = SMTIModel.createPrefs(l as Long, r.randomLong());
+			wPref = SMTIModel.createPrefs(l as Long, r.randomLong());
+			loop:for (m in 0..(l-1)){
+				for (p in 0..(l-1)){
+					if (r.randomInt(100n) <= p1){
+						del++;
+						val dw = mPref(m)(p) - 1n;
+						// deleting in mPref
+						mPref(m)(p) = 0n;
+						for(k in wPref(dw).range())
+							if (wPref(dw)(k) - 1n == m as Int){
+								// deleting in corresponding wPref
+								wPref(dw)(k) = 0n;
+								wDel(dw)++;
+								if(wDel(dw)==l){
+									Logger.info(()=>{"Error: all W preferences deleted"});
+									//TODO: Restart random problem generator 
+									rep=1n;
+									
+									break loop;
+								}
+							}
+					}
+				}
+				if (del == l){
+					Logger.info(()=>{"Error: all M preferences deleted"});
+					//TODO: Restart random problem generator 
+					rep=1n;
+					
+					break;
+				}
+				del = 0n;
+			}
+			
+		}
+		
+		// create some ties in entries with some probabilities p2
+		var noFirst:Int;
+		for (m in 0..(l-1)){
+			noFirst=0n;
+			for (p in 0..(l-1)){
+				if(mPref(m)(p)==0n)
+					continue;
+				if(noFirst==0n){
+					noFirst=1n;
+					continue;
+				}
+				if (r.randomInt(100n) <= p2){
+					//val dw = mPref(m)(p);
+					mPref(m)(p) *= -1n; 	
+				}
+			}
+		}
+		noFirst=0n;
+		for (w in 0..(l-1)){
+			
+			for (p in 0..(l-1)){
+				if(mPref(w)(p)==0n) continue;
+				if(noFirst==0n){
+					noFirst=1n;
+					continue;
+				}
+				if (r.randomInt(100n) <= p2){
+					//val dw = mPref(m)(p);
+					wPref(w)(p) *= -1n; 	
+				}
+			}
+			noFirst=0n;
+		}
+		
+		Rail.copy(mPref, mP);
+		Rail.copy(wPref, wP);	
+	}
+	
 	
 	static def createSMTI(l:Long,seed:Long):Rail[Rail[Int]]{
 		val r = new RandomTools(seed);

@@ -127,7 +127,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		//var antcost : Int = total_cost;
 		
 		// Copy the first match to bestConf vector
-		Rail.copy(csp_.getVariables(),bestConf);
+		Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 		bestCostSMTI = total_cost;
 		bestnbBP = csp_.getnbBP();
 		bestnbSG = csp_.getnbSingles();
@@ -256,13 +256,13 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		if(bestCostSMTI > total_cost){
 	 			//Console.OUT.println("new best cost= "+total_cost);
 	 			// Marriage with small value in the eval function
-	 			Rail.copy(csp_.getVariables(),bestConf);
+	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCostSMTI = total_cost;
 	 			bestnbBP = cnbBP;
 	 			bestnbSG = csp_.getnbSingles();
 	 		}else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
 	 			//Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
-	 			Rail.copy(csp_.getVariables(),bestConf);
+	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCostSMTI = total_cost;
 	 			bestnbBP = cnbBP;
 	 			bestnbSG = csp_.getnbSingles();
@@ -328,10 +328,10 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		
 		if (bestCostSMTI == 0n){
 			Console.OUT.println("perfect marriage found ");
-			csp_.displaySolution(bestConf);
+			csp_.displaySolution(bestConf as Valuation(sz));
 		}else{
 			Console.OUT.println("Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG);
-			csp_.displaySolution(bestConf);
+			csp_.displaySolution(bestConf as Valuation(sz));
 		}
 		
 		
