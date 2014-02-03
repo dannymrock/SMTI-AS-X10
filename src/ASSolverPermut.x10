@@ -271,10 +271,10 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
-	 		if (kill)	{
-	 		    Logger.debug(" killed!");
-	 		    break;		// Check if other place or activity have finished
-	 		}
+	 		// if (kill)	{
+	 		//     Logger.debug(" killed!");
+	 		//     break;		// Check if other place or activity have finished
+	 		// }
 	 	
 	 		
 	 		if (solver.intraTI() != 0n) 
@@ -324,13 +324,13 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
+		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
 		
 		if (bestCostSMTI == 0n){
-			Console.OUT.println("perfect marriage found ");
+			Logger.info(()=>{"perfect marriage found "});
 			csp_.displaySolution(bestConf as Valuation(sz));
 		}else{
-			Console.OUT.println("Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG);
+			Logger.info(()=>{"Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG});
 			csp_.displaySolution(bestConf as Valuation(sz));
 		}
 		

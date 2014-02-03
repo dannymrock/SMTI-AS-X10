@@ -112,7 +112,7 @@ public class CSPStats{
 		val sameIter : Float = same /(iters as Float);
 		//val changeF : Float = (change as Float)/(count as Float);
 		Console.OUT.printf("| %3d | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5d | %3d |\n",swaps,reset,sameIter,restart, bp, singles);
+		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3d | %3d |\n",swaps,reset,sameIter,restart, bp, singles);
 		
 	}
 
@@ -126,9 +126,9 @@ public class CSPStats{
 		val changeF : Float = (change as Float)/(no as Float);
 
 		Console.OUT.printf("| avg | %8.4f | %8d |  N/A  | %8d |",time/no, iters/no, locmin/no);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %5.2f | %5.2f | ",swaps/no,reset/no,sameIter,restart/no,
+		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
 				bp/(no as float), singles/(no as float));
-		Console.OUT.printf( "%3d |\n",accPM);
+		Console.OUT.printf( " %3.1f% \n",(accPM/(no as float))*100.0);
 		
 	}
 }
