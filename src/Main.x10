@@ -105,6 +105,7 @@ public class Main {
 				solvers().solve(solvers, cspGen);
 			}
 			
+			
 			//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
 			
 			Console.OUT.printf("\r");

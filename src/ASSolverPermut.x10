@@ -232,26 +232,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		 *  optimization
 	 		 */
 	 		var cnbBP:Int = csp_.getnbBP(); 
-	 		// if(cnbBP==0n){ //stable marriage (SM)
-	 		// 	if(firstSM == 0n){ //first SM
-	 		// 		firstSM = 1n;
-	 		// 		Rail.copy(csp_.getVariables(),bestConf);
-	 		// 		bestCostSMTI = total_cost;
-	 		// 		bestnbBP = csp_.getnbBP();
-	 		// 		bestnbSG = csp_.getnbSingles();
-	 		// 	}else{
-	 		// 		//both Mbest  and M are stable
-	 		// 		
-	 		// 	}
-	 		// }else{
-	 		// 	if(bestCostSMTI > total_cost){
-	 		// 		// Marriage with small value in the eval function
-	 		// 		Rail.copy(csp_.getVariables(),bestConf);
-	 		// 		bestCostSMTI = total_cost;
-	 		// 		bestnbBP = csp_.getnbBP();
-	 		// 		bestnbSG = csp_.getnbSingles();
-	 		// 	}
-	 		// }
+	 		
 	 		//Console.OUT.println("bestCost="+bestCostSMTI+" vs "+total_cost);
 	 		if(bestCostSMTI > total_cost){
 	 			//Console.OUT.println("new best cost= "+total_cost);

@@ -69,7 +69,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	 * 	@return cost of the solution
 	 */
     public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz) ):void { 
-	val solvers= st;
+	val solvers = st;
 	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
 	val size = sz as Int;
 	var extTime : Long = -System.nanoTime();
@@ -113,11 +113,11 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	    bcost = cost;
 		 
 	    if (winner) {
-		time += System.nanoTime();
-		setStats(solvers);
-		//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-		Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
-		//csp_.displaySolution();
+	    	time += System.nanoTime();
+	    	setStats(solvers);
+	    	//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
+	    	Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
+	    	//csp_.displaySolution();
 	    }
 	//}
 	extTime += System.nanoTime();
@@ -126,7 +126,9 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	//Logger.debug(()=> "updating accStats");
 		
 	// accumulate results in place 0, need a better way at scale.
-	//at (Place.FIRST_PLACE)  st().accStats(stats_);	
+	//at (Place.FIRST_PLACE)  st().accStats(stats_);
+	//if (!winner) 
+	//at (Place.FIRST_PLACE) st().selBestSol();
     }
 	
     @Inline public def getIPVector(csp_:SMTIModel(sz), myCost:Int):Boolean 
@@ -200,7 +202,6 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	
 	public def getCurrentData():Maybe[CSPSharedUnit(sz)]{
 		return null;
-	}
-	
+	}	
 }
 public type PlacesMultiWalks(s:Long)=PlacesMultiWalks{self.sz==s};
