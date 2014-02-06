@@ -502,7 +502,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	public def displaySolution(){
 		Console.OUT.println("\nMatching  m->w:");
 		for (i in variables.range()){
-			Console.OUT.printf("%3d->%-3d",(i+1),variables(i));
+			Console.OUT.printf("%4d->%-4d",(i+1),variables(i));
 		}
 		Console.OUT.print("\n");
 	}
@@ -511,9 +511,9 @@ public class SMTIModel (sz:Long, seed:Long){
 		Console.OUT.println("\nMatching  m->w:");
 		for (i in match.range()){
 			if(revpM(i)(match(i)-1n)==0n){
-				Console.OUT.printf("%3d->%-3d",(i+1),0n);
+				Console.OUT.printf("%4d->%-4d",(i+1),0n);
 			}else
-				Console.OUT.printf("%3d->%-3d",(i+1),variables(i));
+				Console.OUT.printf("%4d->%-4d",(i+1),variables(i));
 		}
 		Console.OUT.print("\n");
 	}

@@ -131,4 +131,24 @@ public class CSPStats{
 		Console.OUT.printf( " %3.1f% \n",(accPM/(no as float))*100.0);
 		
 	}
+	
+	public def clear():void{ 
+		cost = -1n;	
+		team = -1n;
+		explorer = -1n;
+		time = 0.0d;
+		iters = 0n;
+		locmin = 0n;
+		swaps = 0n;
+		reset = 0n;
+		same = 0n;
+		restart = 0n;
+		change = 0n;
+		forceRestart = 0n;
+		
+		bp = 0n;
+		singles = 0n;
+		accPM = 0n;
+	}
+	
 }

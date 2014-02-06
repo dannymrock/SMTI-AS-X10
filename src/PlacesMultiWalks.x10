@@ -47,88 +47,95 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     //Hybrid approach
     val nbExplorerPT : Int;
     val nTeams : Int;
+    
+    val bestC = new Rail[Int](sz,0n); 
 	
     /**
      * 	Constructor of the class
      */
     public def this(vectorSize:Long, upI : Int, interTI : Long , thread : Int , ps : Int, npT : Int ){
-	property(vectorSize,ps);
-	updateI = upI; 
-	//commOption = commOpt;
-	nbExplorerPT = npT; // will be a parameter 
-	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
+    	property(vectorSize,ps);
+    	updateI = upI; 
+    	//commOption = commOpt;
+    	nbExplorerPT = npT; // will be a parameter 
+    	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
     }
-	
-	/** 
-	 * 	Solve the csp problem with MAX_PLACES instance of AS solver
-	 * 	The first one that reach a valid solution sends a kill to the others
-	 * 	to finish the process.
+    
+    /** 
+     * 	Solve the csp problem with MAX_PLACES instance of AS solver
+     * 	The first one that reach a valid solution sends a kill to the others
+     * 	to finish the process.
 	 * 
 	 * 	@param size size of the csp problem
 	 * 	@param cspProblem code with the problem to be solved (1 for Magic Square Problems, other number for Queens Problem)
 	 * 	@return cost of the solution
 	 */
     public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz) ):void { 
-	val solvers = st;
-	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
-	val size = sz as Int;
-	var extTime : Long = -System.nanoTime();
-		
-	val random = new Random();
-		
-	//val seed = random.nextLong();
-	//Console.OUT.println("seed:"+seed);
-	var nsize:Int = size;
-
-	csp_ = cspGen(); // use the supplied generator to generate the problem
-		
-	//conf = new ASSolverConf(sz, 1n /*ASSolverConf.USE_PLACES*/, solvers, updateI,0n, commOption, poolSize, nTeams );
-	commM = new CommManager(sz, 0n , solvers, updateI,0n, poolSize, nTeams );
-	val ss = st() as ParallelSolverI(sz);
-	//solver = new ASSolverPermut(sz, nsize, seed, ss);
-		
-	//Do I need to get more elegant way to obtain different seeds here? 
-	//I'm currently using the solver id (place id) as seed
-	solver = new ASSolverPermut(sz, nsize, here.id, ss);
-
-	var cost:Int = x10.lang.Int.MAX_VALUE;
-		
-	/***/
-	//taking the time only to solve the problem, not included the time to signal the others explorers
-
-	Logger.debug(()=>"  PlacesMultiWalks: Start solve process: solver.solve() function ");
-		
-	time = -System.nanoTime();
-	cost = solver.solve(csp_);
-		
-		
-	//if (cost == 0n){ //TODO: Define a new condition (It's possible to finish without cost=0)
-	    // A solution has been found! Huzzah! 
-	    // Light the candles! Kill the blighters!
-	    val home = here.id;
-		    
-	    val winner = at(Place.FIRST_PLACE) solvers().announceWinner(solvers, home);
-		    
-	    //winPlace = here;
-	    bcost = cost;
-		 
-	    if (winner) {
-	    	time += System.nanoTime();
-	    	setStats(solvers);
-	    	//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-	    	Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
-	    	//csp_.displaySolution();
-	    }
-	//}
-	extTime += System.nanoTime();
-	//stats.time = extTime/1e9;
-	//val stats_=stats;
-	//Logger.debug(()=> "updating accStats");
-		
-	// accumulate results in place 0, need a better way at scale.
-	//at (Place.FIRST_PLACE)  st().accStats(stats_);
-	//if (!winner) 
-	//at (Place.FIRST_PLACE) st().selBestSol();
+    	val solvers = st;
+    	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
+    	val size = sz as Int;
+    	var extTime : Long = -System.nanoTime();
+    	
+    	val random = new Random();
+    	
+    	//val seed = random.nextLong();
+    	//Console.OUT.println("seed:"+seed);
+    	var nsize:Int = size;
+    	
+    	csp_ = cspGen(); // use the supplied generator to generate the problem
+    	
+    	//conf = new ASSolverConf(sz, 1n /*ASSolverConf.USE_PLACES*/, solvers, updateI,0n, commOption, poolSize, nTeams );
+    	commM = new CommManager(sz, 0n , solvers, updateI,0n, poolSize, nTeams );
+    	val ss = st() as ParallelSolverI(sz);
+    	//solver = new ASSolverPermut(sz, nsize, seed, ss);
+    	
+    	//Do I need to get more elegant way to obtain different seeds here? 
+    	//I'm currently using the solver id (place id) as seed
+    	solver = new ASSolverPermut(sz, nsize, here.id, ss);
+    	
+    	var cost:Int = x10.lang.Int.MAX_VALUE;
+    	
+    	/***/
+    	//taking the time only to solve the problem, not included the time to signal the others explorers
+    	
+    	Logger.debug(()=>"  PlacesMultiWalks: Start solve process: solver.solve() function ");
+    	
+    	time = -System.nanoTime();
+    	cost = solver.solve(csp_);
+    	
+    	
+    	if (cost == 0n){ //TODO: Define a new condition (It's possible to finish without cost=0)
+    		// A solution has been found! Huzzah! 
+    		// Light the candles! Kill the blighters!
+    		val home = here.id;
+    		
+    		val winner = at(Place.FIRST_PLACE) solvers().announceWinner(solvers, home);
+    		
+    		//winPlace = here;
+    		bcost = cost;
+    		
+    		if (winner) {
+    			csp_.displaySolution(solver.bestConf as Valuation(sz));
+    			time += System.nanoTime();
+    			setStats1(solvers);
+    			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
+    			Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
+    			//csp_.displaySolution();
+    		}
+    	}
+    	extTime += System.nanoTime();
+    	time += System.nanoTime();
+    	//stats.time = extTime/1e9;
+    	//val stats_=stats;
+    	//Logger.debug(()=> "updating accStats");
+    	// accumulate results in place 0, need a better way at scale.
+    	//at (Place.FIRST_PLACE)  st().accStats(stats_);
+    	//if (!winner) 
+    	//at (Place.FIRST_PLACE) st().selBestSol();
+    	if (!solver.kill){
+    		//copy vector
+    		Rail.copy(solver.bestConf, bestC);
+    	}
     }
 	
     @Inline public def getIPVector(csp_:SMTIModel(sz), myCost:Int):Boolean 
@@ -159,7 +166,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
      * Called by winning place to set the stats at place zero so they
      * can be printed out.
      */
-    def setStats(ss:PlaceLocalHandle[ParallelSolverI(sz)]  ){
+    public def setStats1(ss:PlaceLocalHandle[ParallelSolverI(sz)]  ){
     	val winPlace = here.id;
     	val time = time/1e9;
     	val iters = solver.nbIterTot;
@@ -172,7 +179,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
         val bp = solver.bestnbBP;
         val singles = solver.bestnbSG;
     	
-    	at (Place.FIRST_PLACE) async
+    	at (Place.FIRST_PLACE) 
     	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n, bp, singles);
     }
     public def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int, 
@@ -193,15 +200,66 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	public def getPoolData():Maybe[CSPSharedUnit(sz)]=commM.ep.getRemoteData();
 	
     public def clear(){
-	winnerLatch.set(false);
-	commM.restartPool();
+		winnerLatch.set(false);
+		commM.restartPool();
+		stats.clear();
+		bestC.clear();
     }
     public def accStats(c:CSPStats):void {
-	accStats.accStats(c);
+		accStats.accStats(c);
     }
 	
 	public def getCurrentData():Maybe[CSPSharedUnit(sz)]{
 		return null;
-	}	
+	}
+	
+	public def getBP():Int{
+		return solver.bestnbBP;
+	}
+	public def getCost():Int{
+		return solver.bestCostSMTI;
+	}
+	
+	public def verifyWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void{
+		// detect if no winner has been found
+		// search best solution in all places
+		// set stats objects
+		var minBP:Int = sz as Int + 1n;
+		var minCost:Int = x10.lang.Int.MAX_VALUE;
+		var bestPlace:Place = here; 
+		
+		if (stats.explorer == -1n){
+			Logger.info(()=>"no winner found");
+			
+			for (k in Place.places()){
+				val cBP = at(k) ss().getBP();
+				val cCost = at(k) ss().getCost();
+				
+				if(cBP < minBP){
+					minBP = cBP;
+					minCost = cCost;
+					bestPlace = k;
+				} else if(cBP == minBP){
+					if( cCost < minCost){
+						minBP = cBP;
+						minCost = cCost;
+						bestPlace = k;
+					}
+				}
+			}
+			val p = bestPlace; val bp = minBP; val cost = minCost;
+			Logger.info(()=>"best place="+p+" BP= "+bp+" singles"+(cost-bp));
+			
+			
+			at (bestPlace){
+				//csp_.displaySolution(solver.bestConf as Valuation(sz));
+				ss().setStats1(ss);
+				//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
+				//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
+				//csp_.displaySolution();
+			}
+		}
+	}
+	
 }
 public type PlacesMultiWalks(s:Long)=PlacesMultiWalks{self.sz==s};

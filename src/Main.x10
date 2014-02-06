@@ -105,6 +105,9 @@ public class Main {
 				solvers().solve(solvers, cspGen);
 			}
 			
+			// Detect if there is no winner
+			solvers().verifyWinner(solvers);
+			
 			
 			//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
 			

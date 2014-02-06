@@ -75,6 +75,11 @@ public interface ParallelSolverI {
     def printStats(count:Int):void;
     def printAVG(count:Int):void;
     
+    def verifyWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
+    public def getBP():Int;
+    public def getCost():Int;
+    def setStats1(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
+    
 
 
 }

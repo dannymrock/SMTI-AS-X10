@@ -65,7 +65,7 @@ public class CommManager(sz:Long, poolSize:Int) {
 		
 	}
 	
-	public def setValues(toSet: ASSolverConf{self.sz==this.sz}){
+	public def setValues(toSet: CommManager{self.sz==this.sz}){
 		this.solverMode = toSet.solverMode;
 		this.intraTI = toSet.intraTI;
 		this.interTI = toSet.interTI;
