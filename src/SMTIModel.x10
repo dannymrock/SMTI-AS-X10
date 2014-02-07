@@ -14,7 +14,8 @@ public class SMTIModel (sz:Long, seed:Long){
 	//val nbBPperMan : Rail[Int];
 	val variablesW : Rail[Int];
     val errV : Rail[Int];
-    val bp : Rail[Int];
+    /** Blocking par indexes*/
+    val bpi : Rail[Int];
     
     val menPref : Rail[Rail[Int]];
     
@@ -29,8 +30,8 @@ public class SMTIModel (sz:Long, seed:Long){
 		nbBP = 0n;
 		//nbBPperMan = new Rail[Int](length,0n);
 		variablesW = new Rail[Int](length,0n);
-		errV = new Rail[Int](length,0n);
-		bp = new Rail[Int](length,0n);
+		errV = new Rail[Int](length,-1n);
+		bpi = new Rail[Int](length,-1n);
 		initParameters();
 		val rr=r, l=length as Int;
 		menPref = mPrefs;
@@ -104,12 +105,12 @@ public class SMTIModel (sz:Long, seed:Long){
 	
 	
 	/**
-	 * Returns the error if (m,w) forms a BP (0 else)
+	 * Returns the error if (mi,wi) forms a BP (0 else)
 	 */
-	public def blockingPairError(w:Int, pw:Int, m:Int) : Int {
+	public def blockingPairError(wi:Int, pwi:Int, mi:Int) : Int {
 		var err:Int ;
-		val lvC = revpW(w-1)(pw-1);
-		val lvD = revpW(w-1)(m-1);
+		val lvC = revpW(wi)(pwi);
+		val lvD = revpW(wi)(mi);
 		if (lvC == 0n)  		//current assignment of w (pw) is invalid, not present in Wprefs 
 			err = 1n;
 		else if (lvD == 0n) 	// m is not present in the preferences of w
@@ -146,10 +147,10 @@ public class SMTIModel (sz:Long, seed:Long){
          var r:Int = 0n;
          var singles:Int = 0n;
 
-         //if(shouldBeRecorded != 0n){
+         if(shouldBeRecorded != 0n){
         	 Console.OUT.println("cost of Sol");
         	 Utils.show("conf:",variables);
-         //}
+         }
          
          variablesW.clear();
          for (mi in variables.range()){
@@ -187,10 +188,9 @@ public class SMTIModel (sz:Long, seed:Long){
         		pw = variablesW(w-1); //pw current match of the current W
       			
         		// Verify if w prefers m to pw
-        		e = blockingPairError(w, pw, mi as Int + 1n); 
-        		if (e > 0n){
-        			
-           			bpM = pw; // if pw is 0 the woman bp is single
+        		e = blockingPairError(w-1n, pw-1n, mi as int); 
+        		if (e > 0n){	
+           			bpM = pw; // if w is single, pw is an unvalid match
         			r++;              /* count the errors (number of BP) */
         			break; 			//only consider undominated BP
         		}
@@ -199,15 +199,15 @@ public class SMTIModel (sz:Long, seed:Long){
         		// val bpm = bpM; val vale = e;
         		// if (r == 1n) Logger.info(()=>{"bp mi="+mi+" bpM "+bpm+" err="+vale});
         		errV(mi) = e;
-        		bp(mi) = bpM;
+        		bpi(mi) = bpM-1n;
         		nbBP = r;
         		nbSingles = singles;
-
+        		Console.OUT.println("mi= "+mi+" e= "+e+" bpM= "+bpM);
         		
         	}
-        	Console.OUT.println("mi= "+mi+" e= "+e+" bpM= "+bpM);
+        	
         }
-   		
+        if (shouldBeRecorded != 0n) Console.OUT.println("total_cost= "+(r*weight+singles));
         return r*weight+singles;	
     }
 	
@@ -222,8 +222,8 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def nextJ(i:Int, j:Int, exhaustive:Int) : Int {
-		Console.OUT.println("i= "+i+"j= "+j+"bp-i= "+bp(i));
-		return (j < 0n) ? bp(i)-1n : -1n;
+		Console.OUT.println("i= "+i+"  j= "+j+"  bp-i= "+bpi(i));
+		return (j < 0n) ? bpi(i) : -1n;
 	}
 	
 	
@@ -254,16 +254,15 @@ public class SMTIModel (sz:Long, seed:Long){
 		return r;
 	}
 	
-	public def findMax(pvalue:Int):Int {
+	public def findMax(pvalue1:Int, pvalue2:Int):Int { //pvalue is an man index
 		var maxi:Int = -1n;		/* return -1 if none found */
 		var maxErr:Int = 0n;
 		var maxNb:Int = 0n;
 		var i:Int;
 
-		for(i = 0n; i < length; i++)
-		{
+		for(i = 0n; i < length; i++){
 			var e:Int = errV(i);
-			if (e == 0n || i == pvalue || bp(i) == pvalue) 
+			if (e == 0n || i == pvalue1 || i == pvalue2 ||  bpi(i) == pvalue1 || bpi(i) == pvalue2) 
 				continue;
 			if (e > maxErr){ 	
 				maxi = i;
@@ -274,37 +273,66 @@ public class SMTIModel (sz:Long, seed:Long){
 				maxi = i;
 			}
 		}
-		val mi = maxi;
-		Logger.debug(()=>"maxi:"+mi);
+		// val mi = maxi;
+		// Logger.debug(()=>"maxi:"+mi);
 		return maxi;
 	}
 	
 	public def reset ( var n : Int, totalCost : Int ) : Int {	
-		var i:Int, j:Int;
-		var maxi:Int = findMax(-1n);	/* find max */
-		var bpMaxi:Int = (maxi >= 0n ?  bp(maxi): -1n);
-		var otheri:Int;
-		var nbErr:Int = nbBP; 
-
 		
-		Console.OUT.println("Reset maxi= "+maxi+" bpMaxi = "+ bpMaxi);
-		if (bpMaxi > 0n){
-			swapVariables(maxi, bpMaxi -1n);
-		}
-		// else{
-		// 	//Console.OUT.println("Reset fail maxi= "+maxi+" bpMaxi = "+ bpMaxi);
-		// 	// I dont know if it is possible to do something here
-		// }
-
-		/* find second max if possible (random is to avoid to be trapped in the same local min) */
-		if (nbErr > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(maxi)) >= 0n){
-			if (bp(otheri) > 0n){
-				swapVariables(otheri, (bp(otheri)-1n));
+// 		var i:Int, j:Int;
+// 		var maxi:Int = findMax(-1n,-1n); /* find max */
+// 		var bpMaxi:Int= (maxi >= 0n ? bpi(maxi): -1n);
+// 		var otheri:Int;
+// 		var nbErr:Int = nbBP; /* the cost is the number of errors (ie. BP) */
+// 
+// 
+// 		//Console.OUT.println("Reset maxi= "+maxi+" bpMaxi = "+ bpMaxi);
+// 		if (bpMaxi >= 0n){
+// 			Console.OUT.println("Reset maxi= "+maxi+" bpiMaxi = "+ bpMaxi);
+// 			swapVariables(maxi, bpMaxi);
+// 		}else{
+// 			//Console.OUT.println("Reset fail maxi= "+maxi+" bpMaxi = "+ bpMaxi);
+// 			// I dont know if it is possible to do something here
+// 		}
+// 
+// 		/* find second max if possible (random is to avoid to be trapped in the same local min) */
+// 		if (nbErr > 1n && r.randomDouble() < 0.98 && (otheri = findMax(maxi,bpMaxi)) >= 0n){
+// 			if (bpi(otheri) >= 0n){
+// 				Console.OUT.println("Reset otheri= "+otheri+" bpi(otheri) = "+ bpi(otheri));
+// 				swapVariables(otheri, bpi(otheri));
+// 			}
+// 		}
+// 		else {
+// 			i = r.randomInt(length);
+// 			j = r.randomInt(length);
+// 			Console.OUT.println("Reset out ran i= "+i+" ran j = "+ j);
+// 			swapVariables(i, j);
+// 		}
+// 		return -1n;
+		
+		var nbErr:Int = nbBP; 
+		
+		if (nbErr > 0n){
+			var maxi:Int = findMax(-1n, -1n);	/* find max */
+			var bpiMaxi:Int = bpi(maxi);
+			var otheri:Int; 
+			Console.OUT.println("Reset maxi= "+maxi+" bpiMaxi = "+ bpiMaxi);
+			swapVariables(maxi, bpiMaxi);
+		 	if (nbErr > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(maxi,bpiMaxi)) >= 0n){
+		 		Console.OUT.println("Reset otheri= "+otheri+" bpi(otheri) = "+ bpi(otheri));
+				swapVariables(otheri, bpi(otheri));
+			}else{
+				val i = r.randomInt(length);
+				val j = r.randomInt(length);
+				Console.OUT.println("Reset in ran i= "+i+" ran j = "+ j);
+				swapVariables(i, j);
 			}
 		}
 		else {
-			i = r.randomInt(length);
-			j = r.randomInt(length);
+			val i = r.randomInt(length);
+			val j = r.randomInt(length);
+			Console.OUT.println("Reset out ran i= "+i+" ran j = "+ j);
 			swapVariables(i, j);
 		}
 		return -1n;
@@ -358,7 +386,7 @@ public class SMTIModel (sz:Long, seed:Long){
 				// than the level of pref of pm (current match) "stop condition"
 				pw = variablesW(w-1); //pw current match of the current
 				// 	// Verify if w prefers m to pw
-				e = blockingPairError(w, pw, mi as Int + 1n);
+				e = blockingPairError(w-1n, pw-1n, mi as Int);
 				
 				if (e > 0n){
 					r++;

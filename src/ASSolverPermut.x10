@@ -231,36 +231,28 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		/**
 	 		 *  optimization
 	 		 */
-	 		var cnbBP:Int = csp_.getnbBP(); 
 	 		
-	 		//Console.OUT.println("bestCost="+bestCostSMTI+" vs "+total_cost);
-	 		// if(bestCostSMTI > total_cost){
-	 		// 	//Console.OUT.println("new best cost= "+total_cost);
-	 		// 	// Marriage with small value in the eval function
-	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 		// 	bestCostSMTI = total_cost;
-	 		// 	bestnbBP = cnbBP;
-	 		// 	bestnbSG = csp_.getnbSingles();
-	 		// }else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
-	 		// 	//Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
-	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 		// 	bestCostSMTI = total_cost;
-	 		// 	bestnbBP = cnbBP;
-	 		// 	bestnbSG = csp_.getnbSingles();
-	 		// }
-	 		
-	 		if(cnbBP < bestnbBP){
+	 		if(total_cost < bestCostSMTI){
 	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCostSMTI = total_cost;
-	 			bestnbBP = cnbBP;
+	 			bestnbBP = csp_.getnbBP();
 	 			bestnbSG = csp_.getnbSingles();
-	 		} else if(cnbBP == bestnbBP){
-	 			if( total_cost < bestCostSMTI){
-	 				Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 				bestCostSMTI = total_cost;
-	 				bestnbSG = csp_.getnbSingles();
-	 			}
 	 		}
+	 		
+	 		
+	 		// var cnbBP:Int = csp_.getnbBP(); 
+	 		// if(cnbBP < bestnbBP){
+	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+	 		// 	bestCostSMTI = total_cost;
+	 		// 	bestnbBP = cnbBP;
+	 		// 	bestnbSG = csp_.getnbSingles();
+	 		// } else if(cnbBP == bestnbBP){
+	 		// 	if( total_cost < bestCostSMTI){
+	 		// 		Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+	 		// 		bestCostSMTI = total_cost;
+	 		// 		bestnbSG = csp_.getnbSingles();
+	 		// 	}
+	 		// }
 	 		
 	 		
 	 		
