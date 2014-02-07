@@ -79,6 +79,8 @@ public class Main {
 		 *  Execution loop
 		 */
 		
+		val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](size, (Long) => new Rail[Int](size,0n));
+		val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](size, (Long) => new Rail[Int](size,0n));
 		
 		for (var j : Int = 1n; j <= testNo ; j++ ){
 			
@@ -91,8 +93,6 @@ public class Main {
 			
 			val cspGen : ()=>SMTIModel(vectorSz);
 			
-			val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](size, (Long) => new Rail[Int](size,0n));
-			val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](size, (Long) => new Rail[Int](size,0n));
 			// Passing mPref and wPref by reference
 			SMTIModel.createPrefs(p1, p2, size, seed, mPref, wPref);
 			

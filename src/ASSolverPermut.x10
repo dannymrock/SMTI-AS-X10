@@ -158,15 +158,15 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 			
 			if( !solverP.exhaustive ){
 				max_i = selectVarHighCost( csp_ );
-				//Console.OUT.print("max_i= "+max_i);
+				Console.OUT.print("max_i= "+max_i);
 				min_j = selectVarMinConflict( csp_ );
-				//Console.OUT.println("  min_j= "+min_j);
+				Console.OUT.println("  min_j= "+min_j);
 			} else {
 				selectVarsToSwap( csp_ );
 				//Console.OUT.println("max_i= "+max_i+"  min_j= "+min_j);
 			}
 			
-			//Console.OUT.println("----- iter no: "+nbIter+", cost: "+total_cost+", nb marked: "+nb_var_marked+" ---, nb_swap= "+nbSwap);
+			Console.OUT.println("----- iter no: "+nbIter+", cost: "+total_cost+", nb marked: "+nb_var_marked+" ---, nb_swap= "+nbSwap);
 			
 			if (total_cost != new_cost) {
 				if (nb_in_plateau > 1n) {
@@ -234,20 +234,35 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		var cnbBP:Int = csp_.getnbBP(); 
 	 		
 	 		//Console.OUT.println("bestCost="+bestCostSMTI+" vs "+total_cost);
-	 		if(bestCostSMTI > total_cost){
-	 			//Console.OUT.println("new best cost= "+total_cost);
-	 			// Marriage with small value in the eval function
+	 		// if(bestCostSMTI > total_cost){
+	 		// 	//Console.OUT.println("new best cost= "+total_cost);
+	 		// 	// Marriage with small value in the eval function
+	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+	 		// 	bestCostSMTI = total_cost;
+	 		// 	bestnbBP = cnbBP;
+	 		// 	bestnbSG = csp_.getnbSingles();
+	 		// }else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
+	 		// 	//Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
+	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+	 		// 	bestCostSMTI = total_cost;
+	 		// 	bestnbBP = cnbBP;
+	 		// 	bestnbSG = csp_.getnbSingles();
+	 		// }
+	 		
+	 		if(cnbBP < bestnbBP){
 	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCostSMTI = total_cost;
 	 			bestnbBP = cnbBP;
 	 			bestnbSG = csp_.getnbSingles();
-	 		}else if(bestCostSMTI == total_cost && bestnbBP > cnbBP){
-	 			//Console.OUT.println("new best cost= "+total_cost+" new nbBP= "+cnbBP);
-	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 			bestCostSMTI = total_cost;
-	 			bestnbBP = cnbBP;
-	 			bestnbSG = csp_.getnbSingles();
+	 		} else if(cnbBP == bestnbBP){
+	 			if( total_cost < bestCostSMTI){
+	 				Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+	 				bestCostSMTI = total_cost;
+	 				bestnbSG = csp_.getnbSingles();
+	 			}
 	 		}
+	 		
+	 		
 	 		
 	 		
 			// --- Interaction with other solvers -----
@@ -335,7 +350,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		
 		var i: Int =-1n;
 		var x: Int;
-		var max: Int =0n;
+		var max: Int = 0n;
 	
 		list_i_nb = 0n; //Number of elements
 		nb_var_marked = 0n; 
@@ -383,18 +398,19 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		
 		//loop: 
 		do {
+			Console.OUT.println(" --- max_i= "+max_i);
 			flagOut = false;
 			list_j_nb = 0n;
 	 		new_cost = total_cost;
-	 		//Console.OUT.println("total_cost"+total_cost);
+	 		
 	 		j = -1n;
 	 	
 	 		while((j = csp.nextJ(max_i, j, 0n)) as UInt < size as UInt) // false if j < 0
-		 	//while(++j < size) 
 		 	{	
+	 			
 		 		//Console.OUT.println("swap "+j+"/"+max_i);
 		 		x = csp.costIfSwap(total_cost, j, max_i);
-		 		//Console.OUT.println("swap "+j+"/"+max_i+"  Cost= "+x);
+		 		Console.OUT.println("swap "+j+"/"+max_i+"  Cost= "+x);
 		 		
 		 		if (solverP.probSelectLocMin <= 100n && j == max_i) continue;
 		 		

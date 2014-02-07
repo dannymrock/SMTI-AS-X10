@@ -74,9 +74,11 @@ public class SMTIModel (sz:Long, seed:Long){
 				revpM(mw)(woman) = level;
 			}
 		}
-		//printPreferencesTables();
+		printPreferencesTables();
 	}
 
+	
+	var weight:Int;
 	/** initParameters
 	 *  It is necessary to fine tune the parameters for this problem
 	 */
@@ -94,6 +96,10 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.firstBest = true;
 		
 	    solverParams.probChangeVector = 50n;
+	    
+	    weight = System.getenv().get("V")!=null?length:1n;
+	    Console.OUT.println("weight= "+weight);
+	    
 	}
 	
 	
@@ -140,6 +146,11 @@ public class SMTIModel (sz:Long, seed:Long){
          var r:Int = 0n;
          var singles:Int = 0n;
 
+         //if(shouldBeRecorded != 0n){
+        	 Console.OUT.println("cost of Sol");
+        	 Utils.show("conf:",variables);
+         //}
+         
          variablesW.clear();
          for (mi in variables.range()){
         	 if (variables(mi)==0n) continue;
@@ -168,7 +179,7 @@ public class SMTIModel (sz:Long, seed:Long){
         		else if(w > 0n)			// new level of preference
         			prefW++;
         		else						// if w < 0 -> same level of preference (tie) 
-        			w = Math.abs(w);
+        			w = -w;
         		 
         		if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
         		// than the level of pref of pm (current match) "stop condition"
@@ -178,6 +189,7 @@ public class SMTIModel (sz:Long, seed:Long){
         		// Verify if w prefers m to pw
         		e = blockingPairError(w, pw, mi as Int + 1n); 
         		if (e > 0n){
+        			
            			bpM = pw; // if pw is 0 the woman bp is single
         			r++;              /* count the errors (number of BP) */
         			break; 			//only consider undominated BP
@@ -190,10 +202,13 @@ public class SMTIModel (sz:Long, seed:Long){
         		bp(mi) = bpM;
         		nbBP = r;
         		nbSingles = singles;
+
+        		
         	}
+        	Console.OUT.println("mi= "+mi+" e= "+e+" bpM= "+bpM);
         }
    		
-        return r+singles;	
+        return r*weight+singles;	
     }
 	
 	/** 
@@ -207,7 +222,8 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def nextJ(i:Int, j:Int, exhaustive:Int) : Int {
-		return (j < 0n) ? bp(i) : -1n;
+		Console.OUT.println("i= "+i+"j= "+j+"bp-i= "+bp(i));
+		return (j < 0n) ? bp(i)-1n : -1n;
 	}
 	
 	
@@ -266,21 +282,22 @@ public class SMTIModel (sz:Long, seed:Long){
 	public def reset ( var n : Int, totalCost : Int ) : Int {	
 		var i:Int, j:Int;
 		var maxi:Int = findMax(-1n);	/* find max */
-		var bpMaxi:Int= (maxi >= 0n ?  bp(maxi): -1n);
+		var bpMaxi:Int = (maxi >= 0n ?  bp(maxi): -1n);
 		var otheri:Int;
-		var nbErr:Int = totalCost; /* the cost is the number of errors (ie. BP) */
+		var nbErr:Int = nbBP; 
 
 		
-		//Console.OUT.println("Reset maxi= "+maxi+" bpMaxi = "+ bpMaxi);
+		Console.OUT.println("Reset maxi= "+maxi+" bpMaxi = "+ bpMaxi);
 		if (bpMaxi > 0n){
 			swapVariables(maxi, bpMaxi -1n);
-		}else{
-			//Console.OUT.println("Reset fail maxi= "+maxi+" bpMaxi = "+ bpMaxi);
-			// I dont know if it is possible to do something here
 		}
+		// else{
+		// 	//Console.OUT.println("Reset fail maxi= "+maxi+" bpMaxi = "+ bpMaxi);
+		// 	// I dont know if it is possible to do something here
+		// }
 
 		/* find second max if possible (random is to avoid to be trapped in the same local min) */
-		if (nbErr > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(bpMaxi)) >= 0n){
+		if (nbErr > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(maxi)) >= 0n){
 			if (bp(otheri) > 0n){
 				swapVariables(otheri, (bp(otheri)-1n));
 			}
@@ -364,21 +381,22 @@ public class SMTIModel (sz:Long, seed:Long){
 	 */
 	static def createPrefs(p1:Int, p2:Int, l:Int, seed:Long,  mP:Rail[Rail[Int]], wP:Rail[Rail[Int]]){
 		val r = new RandomTools(seed);
-		var mPref:Rail[Rail[Int]] = SMTIModel.createPrefs(l as Long, r.randomLong());
-		var wPref:Rail[Rail[Int]] = SMTIModel.createPrefs(l as Long, r.randomLong());
+		var mPref:Rail[Rail[Int]] ;
+		var wPref:Rail[Rail[Int]] ;
 		val wDel = new Rail[Int](l as Long, 0n);
 		
 		// delete some entries with some probability p1
-		var del:Int = 0n;
+		var del:Int;
 		var rep:Int = 1n;
 		
-		 while(rep == 1n){
-			Console.OUT.println("Creating SMTI");
+		 do{
+			//Console.OUT.println("Creating SMTI");
 			rep = 0n;
 			wDel.clear();
 			mPref = SMTIModel.createPrefs(l as Long, r.randomLong());
 			wPref = SMTIModel.createPrefs(l as Long, r.randomLong());
 			loop:for (m in 0..(l-1)){
+				del = 0n;
 				for (p in 0..(l-1)){
 					if (r.randomInt(100n) <= p1){
 						del++;
@@ -391,7 +409,7 @@ public class SMTIModel (sz:Long, seed:Long){
 								wPref(dw)(k) = 0n;
 								wDel(dw)++;
 								if(wDel(dw)==l){
-									Logger.info(()=>{"Error: all W preferences deleted"});
+									Logger.debug(()=>{"Error: all W preferences deleted"});
 									//TODO: Restart random problem generator 
 									rep=1n;
 									
@@ -401,16 +419,16 @@ public class SMTIModel (sz:Long, seed:Long){
 					}
 				}
 				if (del == l){
-					Logger.info(()=>{"Error: all M preferences deleted"});
+					Logger.debug(()=>{"Error: all M preferences deleted"});
 					//TODO: Restart random problem generator 
 					rep=1n;
 					
 					break;
 				}
-				del = 0n;
-			}
+				
+			} 
 			
-		}
+		}while(rep == 1n);
 		
 		// create some ties in entries with some probabilities p2
 		var noFirst:Int;
@@ -429,9 +447,9 @@ public class SMTIModel (sz:Long, seed:Long){
 				}
 			}
 		}
-		noFirst=0n;
+		
 		for (w in 0..(l-1)){
-			
+			noFirst=0n;
 			for (p in 0..(l-1)){
 				if(mPref(w)(p)==0n) continue;
 				if(noFirst==0n){
@@ -443,7 +461,6 @@ public class SMTIModel (sz:Long, seed:Long){
 					wPref(w)(p) *= -1n; 	
 				}
 			}
-			noFirst=0n;
 		}
 		
 		Rail.copy(mPref, mP);

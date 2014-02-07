@@ -125,17 +125,11 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	}
     	extTime += System.nanoTime();
     	time += System.nanoTime();
-    	//stats.time = extTime/1e9;
-    	//val stats_=stats;
-    	//Logger.debug(()=> "updating accStats");
-    	// accumulate results in place 0, need a better way at scale.
-    	//at (Place.FIRST_PLACE)  st().accStats(stats_);
-    	//if (!winner) 
-    	//at (Place.FIRST_PLACE) st().selBestSol();
-    	if (!solver.kill){
-    		//copy vector
-    		Rail.copy(solver.bestConf, bestC);
-    	}
+    	
+    	// if (!solver.kill){
+    	// 	//copy vector
+    	// 	Rail.copy(solver.bestConf, bestC);
+    	// }
     }
 	
     @Inline public def getIPVector(csp_:SMTIModel(sz), myCost:Int):Boolean 

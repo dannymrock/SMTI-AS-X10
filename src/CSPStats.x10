@@ -128,7 +128,7 @@ public class CSPStats{
 		Console.OUT.printf("| avg | %8.4f | %8d |  N/A  | %8d |",time/no, iters/no, locmin/no);
 		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
 				bp/(no as float), singles/(no as float));
-		Console.OUT.printf( " %3.1f% \n",(accPM/(no as float))*100.0);
+		Console.OUT.printf( " %3.1f \n",(accPM/(no as float))*100.0);
 		
 	}
 	
