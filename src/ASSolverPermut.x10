@@ -19,23 +19,23 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 
 	//var nb_var_to_reset : Int; 
 	
-	var max_i : Int;		//static int max_i ALIGN;		/* swap var 1: max projected cost (err_var[])*/
-	var min_j : Int;
+	var maxI : Int;		
+	var minJ : Int;
 	
-	var best_cost : Int;
-	var new_cost : Int;
-	var total_cost : Int;
+	var bestCost : Int;
+	var newCost : Int;
+	var totalCost : Int;
 	val random = new RandomTools(seed);
 	var kill : Boolean=false;
 	var forceRestart : Boolean = false;
 	
-	var list_i_nb : Int;
-	var list_j_nb : Int;
+	var listInb : Int;
+	var listJnb : Int;
 	
-	val list_ij = new Rail[PairAS](size);
-	val list_i = new Rail[Int](size, 0n);
+	val listIJ = new Rail[PairAS](size);
+	val listI = new Rail[Int](size, 0n);
 	
-	var nb_var_marked : Int = 0n; 
+	var nbVarMarked : Int = 0n; 
 	//val varRegion : Region(1);
 	/** Number of iterations to update kill status */
 	//val updateP : Int;
@@ -81,9 +81,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 *  @return the final total cost after solving process (If success returns 0)
 	 */ 
 	public def solve( csp_ : SMTIModel{self.sz==this.sz} ) : Int { //
-		var firstSM:Int = 0n;
-		var nb_in_plateau:Int; 
-		
+		var nbInPlateau:Int; 
 		csp_.setParameters(solverP);
 		
 		//nb_var_to_reset = (((size * solverP.resetPercent) + (100) - 1) / (100));
@@ -99,9 +97,8 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		//Main.show("initial= ",csp.variables);
 		
 		mark.clear();
-		list_i.clear();
+		listI.clear();
 		
-		nbRestart = 0n;
 		nbRestart = 0n;
 		nbSwap = 0n;
 		nbIter = 0n;
@@ -110,7 +107,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbReset = 0n;
 		nbChangeV = 0n;
 		
-		nb_in_plateau = 0n;
+		nbInPlateau = 0n;
 		
 		nbIterTot = 0n;
 		nbResetTot = 0n;	
@@ -118,24 +115,22 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbSameVarTot = 0n;
 		nbLocalMinTot = 0n; 
 		
-		
-		
-		total_cost = csp_.costOfSolution(true);
-		best_cost = total_cost;
-		var best_of_best: Int = x10.lang.Int.MAX_VALUE ;
+		totalCost = csp_.costOfSolution(true);
+		bestCost = totalCost;
+		var bestOfBest: Int = x10.lang.Int.MAX_VALUE ;
 		//var slope : Int = 0;
-		//var antcost : Int = total_cost;
+		//var antcost : Int = totalCost;
 		
 		// Copy the first match to bestConf vector
 		Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-		bestCostSMTI = total_cost;
+		bestCostSMTI = totalCost;
 		bestnbBP = csp_.getnbBP();
 		bestnbSG = csp_.getnbSingles();
 		//Console.OUT.println("initial bestCost="+bestCostSMTI);
 		
-		while( total_cost != 0n ){
-			if (best_cost < best_of_best)
-				best_of_best = best_cost;
+		while( totalCost != 0n ){
+			if (bestCost < bestOfBest)
+				bestOfBest = bestCost;
 	
 			nbIter++;
 	  
@@ -146,9 +141,9 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 					csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
 					nbRestart++;
 					restartVar();
-					best_cost = total_cost = csp_.costOfSolution(true);
-					best_of_best = x10.lang.Int.MAX_VALUE ;
-					nb_in_plateau = 0n;
+					bestCost = totalCost = csp_.costOfSolution(true);
+					bestOfBest = x10.lang.Int.MAX_VALUE ;
+					nbInPlateau = 0n;
 					solver.clear();
 					continue;
 				}
@@ -157,49 +152,49 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 			}
 			
 			if( !solverP.exhaustive ){
-				max_i = selectVarHighCost( csp_ );
-				//Console.OUT.print("max_i= "+max_i);
-				min_j = selectVarMinConflict( csp_ );
-				//Console.OUT.println("  min_j= "+min_j);
+				maxI = selectVarHighCost( csp_ );
+				//Console.OUT.print("maxI= "+maxI);
+				minJ = selectVarMinConflict( csp_ );
+				//Console.OUT.println("  minJ= "+minJ);
 			} else {
 				selectVarsToSwap( csp_ );
-				//Console.OUT.println("max_i= "+max_i+"  min_j= "+min_j);
+				//Console.OUT.println("maxI= "+maxI+"  minJ= "+minJ);
 			}
 			
-			//Console.OUT.println("----- iter no: "+nbIter+", cost: "+total_cost+", nb marked: "+nb_var_marked+" ---, nb_swap= "+nbSwap);
+			//Console.OUT.println("----- iter no: "+nbIter+", cost: "+totalCost+", nb marked: "+nbVarMarked+" ---, nb_swap= "+nbSwap);
 			
-			if (total_cost != new_cost) {
-				if (nb_in_plateau > 1n) {
-			 		//Console.OUT.println("end of plateau, length: "+ nb_in_plateau);
+			if (totalCost != newCost) {
+				if (nbInPlateau > 1n) {
+			 		//Console.OUT.println("end of plateau, length: "+ nbInPlateau);
 			 	}
-			 	nb_in_plateau = 0n;
+			 	nbInPlateau = 0n;
 			}
-			if (new_cost < best_cost) best_cost = new_cost;
+			if (newCost < bestCost) bestCost = newCost;
 			
-			nb_in_plateau++;
+			nbInPlateau++;
 			
-			if (min_j == -1n) continue; //What??
+			if (minJ == -1n) continue; //What??
 			
-	 		if (max_i == min_j) {
-	 			//val res = solverC.communicate(total_cost, csp,commRefs);
-	 			//if (min_j != alMinJ)
-	 				//Console.OUT.println("lmin_j = "+ min_j+ " alMinJ = "+alMinJ);
+	 		if (maxI == minJ) {
+	 			//val res = solverC.communicate(totalCost, csp,commRefs);
+	 			//if (minJ != alMinJ)
+	 				//Console.OUT.println("lminJ = "+ minJ+ " alMinJ = "+alMinJ);
 	 			
 	 			nbLocalMin++;
-				mark(max_i) = nbSwap + solverP.freezeLocMin; //Mark(max_i, freeze_loc_min);
-				//Console.OUT.println("nb_var_marked "+nb_var_marked+"solverP.resetLimit= "+solverP.resetLimit);
-	 			if (nb_var_marked + 1 >= solverP.resetLimit)
+				mark(maxI) = nbSwap + solverP.freezeLocMin; //Mark(maxI, freeze_loc_min);
+				//Console.OUT.println("nbVarMarked "+nbVarMarked+"solverP.resetLimit= "+solverP.resetLimit);
+	 			if (nbVarMarked + 1 >= solverP.resetLimit)
 	 			{				
 	 				// do reset or get some vector from the comm pool
 	 				/*if (random.randomInt(100) < solverP.probChangeVector){
-	 					val result = solverC.getIPVector(csp, total_cost );
+	 					val result = solverC.getIPVector(csp, totalCost );
 	 					if (result == -1)
 	 						doReset(solverP.nbVarToReset,csp);//doReset(nb_var_to_reset,csp);
 	 					else{
 	 						nbChangeV++;
 	 						nbSwap += size ; //I don't know what happened here with costas reset
 	 						mark.clear();
-	 						total_cost = csp.costOfSolution(1);
+	 						totalCost = csp.costOfSolution(1);
 	 					}
 	 				}else{*/
 	 				
@@ -212,17 +207,17 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 				
 	 			}
 			} else {
-				mark(max_i) = nbSwap + solverP.freezeSwap; //Mark(max_i, ad.freeze_swap);
-				mark(min_j) = nbSwap + solverP.freezeSwap; //Mark(min_j, ad.freeze_swap);
+				mark(maxI) = nbSwap + solverP.freezeSwap; //Mark(maxI, ad.freeze_swap);
+				mark(minJ) = nbSwap + solverP.freezeSwap; //Mark(minJ, ad.freeze_swap);
 			
-				csp_.swapVariables(max_i, min_j);//adSwap(max_i, min_j,csp);
+				csp_.swapVariables(maxI, minJ);//adSwap(maxI, minJ,csp);
 				nbSwap++;
-				csp_.executedSwap(max_i, min_j);
-				total_cost = new_cost;
+				csp_.executedSwap(maxI, minJ);
+				totalCost = newCost;
 				
-				//slope = antcost - total_cost;
-				//antcost = total_cost;
-				//Console.OUT.println("slope in "+here.id+" : "+slope+ " total cost : "+total_cost);
+				//slope = antcost - totalCost;
+				//antcost = totalCost;
+				//Console.OUT.println("slope in "+here.id+" : "+slope+ " total cost : "+totalCost);
 			}
 	 		
 			// 	Utils.show("partial sol",csp_.getVariables());
@@ -232,9 +227,9 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		 *  optimization
 	 		 */
 	 		
-	 		if(total_cost < bestCostSMTI){
+	 		if(totalCost < bestCostSMTI){
 	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 			bestCostSMTI = total_cost;
+	 			bestCostSMTI = totalCost;
 	 			bestnbBP = csp_.getnbBP();
 	 			bestnbSG = csp_.getnbSingles();
 	 		}
@@ -243,13 +238,13 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		// var cnbBP:Int = csp_.getnbBP(); 
 	 		// if(cnbBP < bestnbBP){
 	 		// 	Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 		// 	bestCostSMTI = total_cost;
+	 		// 	bestCostSMTI = totalCost;
 	 		// 	bestnbBP = cnbBP;
 	 		// 	bestnbSG = csp_.getnbSingles();
 	 		// } else if(cnbBP == bestnbBP){
-	 		// 	if( total_cost < bestCostSMTI){
+	 		// 	if( totalCost < bestCostSMTI){
 	 		// 		Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-	 		// 		bestCostSMTI = total_cost;
+	 		// 		bestCostSMTI = totalCost;
 	 		// 		bestnbSG = csp_.getnbSingles();
 	 		// 	}
 	 		// }
@@ -269,14 +264,14 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		    if( nbIter % solver.intraTI() == 0n){        //here.id as Int ){
 	 		        //Console.OUT.println("In ");
 	 		        //Chang//
-	 		        solver.communicate( total_cost, csp_.variables); 
+	 		        solver.communicate( totalCost, csp_.variables); 
 	 		        if (random.randomInt(100n) < solverP.probChangeVector){
-	 		            val result = solver.getIPVector(csp_, total_cost );
+	 		            val result = solver.getIPVector(csp_, totalCost );
 	 		            if (result){
 	 		                nbChangeV++;
 	 		                nbSwap += size ; //I don't know what happened here with costas reset
 	 		                mark.clear();
-	 		                total_cost = csp_.costOfSolution(true);
+	 		                totalCost = csp_.costOfSolution(true);
 	 		                //Console.OUT.println("Changing vector in "+ here);
 	 		            }
 	 		            
@@ -294,9 +289,9 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 			csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
 	 			nbForceRestart++;
 	 			restartVar();
-	 			best_cost = total_cost = csp_.costOfSolution(true);
-	 			best_of_best = x10.lang.Int.MAX_VALUE ;
-	 			nb_in_plateau = 0n;
+	 			bestCost = totalCost = csp_.costOfSolution(true);
+	 			bestOfBest = x10.lang.Int.MAX_VALUE ;
+	 			nbInPlateau = 0n;
 	 			solver.clear();
 	 			continue;
 	 		}
@@ -312,15 +307,16 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		//Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+total_cost});
+		//Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+totalCost});
 		
 		if (bestCostSMTI == 0n){
 			Logger.info(()=>{"perfect marriage found "});
 			//csp_.displaySolution(bestConf as Valuation(sz));
-		}else{
-			Logger.info(()=>{"Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG});
-			//csp_.displaySolution(bestConf as Valuation(sz));
 		}
+		// else{
+		// 	Logger.info(()=>{"Best marriage found - BP= "+bestnbBP+" Singles="+bestnbSG});
+		// 	//csp_.displaySolution(bestConf as Valuation(sz));
+		// }
 		
 		
 		//creating an error
@@ -344,12 +340,12 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		var x: Int;
 		var max: Int = 0n;
 	
-		list_i_nb = 0n; //Number of elements
-		nb_var_marked = 0n; 
+		listInb = 0n; //Number of elements
+		nbVarMarked = 0n; 
 		//Console.OUT.println("Aqui");
 		while(++i < size)  {
 			if (nbSwap < mark(i)) {
-				nb_var_marked++;
+				nbVarMarked++;
 				continue;
 			}
 			//Console.OUT.println("Aqui");
@@ -358,22 +354,22 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 			if (x >= max){
 				if (x > max){
 					max = x;
-					list_i_nb = 0n;
+					listInb = 0n;
 				}
-				list_i(list_i_nb++) = i; 
+				listI(listInb++) = i; 
 			}
 		}
 		
-		x = random.randomInt(list_i_nb);
-		//Console.OUT.println("list_i_nb "+list_i_nb+ " x "+x+" list_i(x) "+list_i(x));
-		max_i = list_i(x); //This max_i must be local or only returns the value
-		nbSameVar += list_i_nb;
+		x = random.randomInt(listInb);
+		//Console.OUT.println("listInb "+listInb+ " x "+x+" listI(x) "+listI(x));
+		maxI = listI(x); //This maxI must be local or only returns the value
+		nbSameVar += listInb;
 		
 		// get alternative maxI for communication pourposses
-		x = random.randomInt(list_i_nb);
-		alMaxI = list_i(x); // I hope list_i_nb are > 1 
+		x = random.randomInt(listInb);
+		alMaxI = listI(x); // I hope listInb are > 1 
 		
-		return max_i;
+		return maxI;
 	}
 	
 	/**
@@ -386,81 +382,81 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		var j: Int;
 		var x: Int;
 		var flagOut:Boolean = false; 
-		var lmin_j : Int = -1n;
+		var lminJ : Int = -1n;
 		
 		//loop: 
 		do {
-			//Console.OUT.println(" --- max_i= "+max_i);
+			//Console.OUT.println(" --- maxI= "+maxI);
 			flagOut = false;
-			list_j_nb = 0n;
-	 		new_cost = total_cost;
+			listJnb = 0n;
+	 		newCost = totalCost;
 	 		
 	 		j = -1n;
 	 	
-	 		while((j = csp.nextJ(max_i, j, 0n)) as UInt < size as UInt) // false if j < 0
+	 		while((j = csp.nextJ(maxI, j, 0n)) as UInt < size as UInt) // false if j < 0
 		 	{	
 	 			
-		 		//Console.OUT.println("swap "+j+"/"+max_i);
-		 		x = csp.costIfSwap(total_cost, j, max_i);
-		 		//Console.OUT.println("swap "+j+"/"+max_i+"  Cost= "+x);
+		 		//Console.OUT.println("swap "+j+"/"+maxI);
+		 		x = csp.costIfSwap(totalCost, j, maxI);
+		 		//Console.OUT.println("swap "+j+"/"+maxI+"  Cost= "+x);
 		 		
-		 		if (solverP.probSelectLocMin <= 100n && j == max_i) continue;
+		 		if (solverP.probSelectLocMin <= 100n && j == maxI) continue;
 		 		
 		 		//
-		 		if (x < new_cost){
-		 			list_j_nb = 1n;
-		 			new_cost = x;
-		 			lmin_j = j;
+		 		if (x < newCost){
+		 			listJnb = 1n;
+		 			newCost = x;
+		 			lminJ = j;
 		 			
 		 			//For alternative move 
 		 			alMinJ = j;
 		 			
-		 			if (solverP.firstBest) return lmin_j;   
-		 		} else if (x == new_cost){
-		 			if (random.randomInt(++list_j_nb) == 0n)
-		 				lmin_j = j;
+		 			if (solverP.firstBest) return lminJ;   
+		 		} else if (x == newCost){
+		 			if (random.randomInt(++listJnb) == 0n)
+		 				lminJ = j;
 		 			
 		 			//Select alternative move
-		 			if (random.randomInt(list_j_nb) == 0n)
+		 			if (random.randomInt(listJnb) == 0n)
 		 				alMinJ = j;
 		 			
 		 		}
 		 	}
 	 	
 		 	if (solverP.probSelectLocMin <= 100n) {
-		 		if (new_cost >= total_cost && 
+		 		if (newCost >= totalCost && 
 		 			(random.randomInt(100n) < solverP.probSelectLocMin 
-		 			        ||(list_i_nb <= 1n && list_j_nb <= 1n))) {
-		 			lmin_j = max_i;
-		 			return lmin_j;
+		 			        ||(listInb <= 1n && listJnb <= 1n))) {
+		 			lminJ = maxI;
+		 			return lminJ;
 		 		}
 		
-		 		if (list_j_nb == 0n) {
-		 			//Console.OUT.println("list_i_nb= "+list_i_nb);
+		 		if (listJnb == 0n) {
+		 			//Console.OUT.println("listInb= "+listInb);
 		 			nbIter++;
-		 			x = random.randomInt(list_i_nb);
-		 			max_i = list_i(x);
+		 			x = random.randomInt(listInb);
+		 			maxI = listI(x);
 		 			flagOut = true;
 		 		}
 		 	}
 		} while(flagOut);
-	 	//Console.OUT.println("list_J = "+ list_j_nb);
+	 	//Console.OUT.println("list_J = "+ listJnb);
 		
 		//Chang//
 		//Here communicate alternative vector with some probability
-		/*if (lmin_j != alMinJ && solverC.commOption != 0){//if (solverC.commOption != 0){//
-			//Console.OUT.println("lmin_j = "+ lmin_j+ " alMinJ = "+alMinJ);
+		/*if (lminJ != alMinJ && solverC.commOption != 0){//if (solverC.commOption != 0){//
+			//Console.OUT.println("lminJ = "+ lminJ+ " alMinJ = "+alMinJ);
 			var altConf : Rail[Int] = new Rail[Int](0..(size-1));
 			Array.copy(csp.variables, altConf);
 			// swap var
 			val aux = altConf(alMinJ);
-			altConf(alMinJ) = altConf(max_i);
-			altConf(max_i) = aux;
+			altConf(alMinJ) = altConf(maxI);
+			altConf(maxI) = aux;
 			
-			val res = solverC.communicate( new_cost, altConf);
+			val res = solverC.communicate( newCost, altConf);
 		}*/
 		
-		return lmin_j;
+		return lminJ;
 	}
 	
 	/**
@@ -473,20 +469,20 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		
 		var cost : Int = -1n;		//reset(n, csp);
 				
-		cost = csp_.reset( n, total_cost );
+		cost = csp_.reset( n, totalCost );
 		nbSwap += n ; //I don't know what happened here with costas reset
 		
 		mark.clear();
 		nbReset++;
 		//Console.OUT.println("Do reset...: "+ nbReset);
-		total_cost = (cost < 0n) ? csp_.costOfSolution(true) : cost; //Arg costofsol(1)
+		totalCost = (cost < 0n) ? csp_.costOfSolution(true) : cost; //Arg costofsol(1)
 	}
 	
 // 	public def changeVector(csp : SMTIModel){
 // 		var ipVector : Int = -1;
 // 		
 // 		//Main.show("antes= ",csp.variables);
-// 		ipVector = solverC.getIPVector(csp, total_cost, commRefs);
+// 		ipVector = solverC.getIPVector(csp, totalCost, commRefs);
 // 		//Main.show("despues= ",csp.variables);
 // 		
 // 		if (ipVector == 1){
@@ -494,7 +490,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 // 			nbSwap += size;
 // 			//Console.OUT.println("do change vector");
 // 			mark.clear();
-// 			total_cost = csp.costOfSolution(1); //Arg costofsol(1)
+// 			totalCost = csp.costOfSolution(1); //Arg costofsol(1)
 // 		}
 // 
 // 	}
@@ -507,7 +503,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	}
 	
 	/**
-	 *  Computes max_i and min_j, the 2 variables to swap.
+	 *  Computes maxI and minJ, the 2 variables to swap.
 	 *  All possible pairs are tested exhaustively.
 	 */
 	public def selectVarsToSwap(csp : SMTIModel) {
@@ -516,33 +512,33 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		var x : Int;
 		
 		nbListIJ = 0n;
-		new_cost = x10.lang.Int.MAX_VALUE ;
-		nb_var_marked = 0n;
+		newCost = x10.lang.Int.MAX_VALUE ;
+		nbVarMarked = 0n;
 		
-		//Console.OUT.println("TC =>"+total_cost);
+		//Console.OUT.println("TC =>"+totalCost);
  
  		i = -1n;
  		while(++i < size) { // false if i < 0
-			if ( nbSwap < mark(i) ) nb_var_marked++;
+			if ( nbSwap < mark(i) ) nbVarMarked++;
  			j = i; //j = -1;
  			while(++j < size) { //while((unsigned) (j = Next_J(i, j, i + 1)) < (unsigned) ad.size) // false if j < 0
  				//Console.OUT.println("SWAP "+i+" <-> "+j);
- 				x = csp.costIfSwap(total_cost, i, j);
+ 				x = csp.costIfSwap(totalCost, i, j);
  				//Console.OUT.println("cost = "+x);
  
- 				if (x <= new_cost) {
- 					if (x < new_cost) {
- 						new_cost = x;
+ 				if (x <= newCost) {
+ 					if (x < newCost) {
+ 						newCost = x;
  						nbListIJ = 0n;
- 						if (solverP.firstBest == true && x < total_cost) {
- 							max_i = i;
- 							min_j = j;
+ 						if (solverP.firstBest == true && x < totalCost) {
+ 							maxI = i;
+ 							minJ = j;
  							return; 
  						}
  					}
- 					list_ij(nbListIJ) = new PairAS();
- 					list_ij(nbListIJ).i = i;
- 					list_ij(nbListIJ).j = j;
+ 					listIJ(nbListIJ) = new PairAS();
+ 					listIJ(nbListIJ).i = i;
+ 					listIJ(nbListIJ).j = j;
  					nbListIJ = (nbListIJ + 1n) % size;
  				}
  			}
@@ -550,26 +546,26 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
  
  		nbSameVar += nbListIJ;
  
- 		if (new_cost >= total_cost) {
+ 		if (newCost >= totalCost) {
  			if (nbListIJ == 0n || 
  					(( solverP.probSelectLocMin <= 100n) 
  					        && random.randomInt(100n) < solverP.probSelectLocMin)) {
  				for(i = 0n; nbSwap < mark(i); i++)
  				{}
- 				max_i = min_j = i;
+ 				maxI = minJ = i;
  				return;//goto end;
  			}
  
  			if (!(solverP.probSelectLocMin <= 100n) 
  			        && (x = random.randomInt(nbListIJ + size)) < size) {
- 				max_i = min_j = x;
+ 				maxI = minJ = x;
  				return;//goto end;
  			}
  		}
  
  		x = random.randomInt(nbListIJ);
- 		max_i = list_ij(x).i;
- 		min_j = list_ij(x).j;
+ 		maxI = listIJ(x).i;
+ 		minJ = listIJ(x).j;
  		return;
 	}
 	
@@ -585,7 +581,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		test = selectVarHighCost(csp_);
 		var timeEnd :Long = x10.lang.System.nanoTime(); 
 		
-		Console.OUT.println("max_i= "+test);
+		Console.OUT.println("maxI= "+test);
 		
 		return timeEnd-timeStart;
 	}

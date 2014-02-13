@@ -75,11 +75,11 @@ public class SMTIModel (sz:Long, seed:Long){
 				else // if current value is negative = tie, same level as the previous one
 					woman = Math.abs(woman);
 				
-				woman--; //Convertion to an index	
+				woman--; //Converting to an index	
 				revpM(mw)(woman) = level;
 			}
 		}
-		//printPreferencesTables();
+		/// printPreferencesTables();
 	}
 
 	/** initParameters
@@ -92,13 +92,13 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.freezeSwap = 0n;
 		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
-		solverParams.restartLimit = 30n*length;
+		solverParams.restartLimit = 30n*length; //30
 		solverParams.restartMax = 0n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
 		
-	    solverParams.probChangeVector = 50n;
+	    solverParams.probChangeVector = 5n;
 	    
 	    //weight = System.getenv().get("V")!=null?length:1n;
 	    //Console.OUT.println("weight= "+weight);
@@ -120,7 +120,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		if (lvC == 0n){
             //current assignment of w (pw) is invalid, not present in Wprefs 
 			//err = length;
-			err =1n;
+			err = 1n;
 		}else if (lvD == 0n){
             // m is not present in the preferences of w
 			err = 0n;
@@ -152,10 +152,10 @@ public class SMTIModel (sz:Long, seed:Long){
          var singles:Int = 0n;
          var singleF:Boolean = false;
          
-         // if(shouldBeRecorded != 0n){
-        	//  Console.OUT.println("cost of Sol");
-        	//  Utils.show("conf:",variables);
-         // }
+         /// if(shouldBeRecorded){
+        	///  Console.OUT.println("cost of Sol");
+        	///  Utils.show("conf:",variables);
+         /// }
          
          variablesW.clear();
          for (mi in variables.range()){ // mi -> man index (man number = mi + 1)
@@ -191,7 +191,7 @@ public class SMTIModel (sz:Long, seed:Long){
         		if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
         		// than the level of pref of pm (current match) "stop condition"
         		 
-        		pwi = variablesW(w-1)-1n; //pw current match of the current W
+        		pwi = variablesW(w-1)-1n; //pwi index of the current match of the woman w
       			
         		// Verify if w prefers m to pw
         		e = blockingPairError(w-1n, pwi, mi as int); 
@@ -210,14 +210,14 @@ public class SMTIModel (sz:Long, seed:Long){
         		}
         		errV(mi) = e;
         		bpi(mi) = bpMi;
-        		//Console.OUT.println("mi= "+mi+" e= "+e+" bpM= "+bpM);
+        		///Console.OUT.println("mi= "+mi+" e= "+e+" bpMi= "+bpMi);
         	}
         	
         }
         if (shouldBeRecorded) {
         	nbBP = bpnumber;
         	nbSingles = singles;
-        	//Console.OUT.println("total_cost= "+(r*weight+singles));
+        	///Console.OUT.println("totalCost= "+(bpnumber*weight+singles));
         }
         return bpnumber*weight+singles;	
     }
@@ -235,7 +235,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	
 	
 	public def nextJ(i:Int, j:Int, exhaustive:Int) : Int {
-		//Console.OUT.println("i= "+i+"  j= "+j+"  bp-i= "+bpi(i));
+		///Console.OUT.println("i= "+i+"  j= "+j+"  bp-i= "+bpi(i));
 		return (j < 0n) ? bpi(i) : -1n;
 	}
 	
@@ -325,40 +325,55 @@ public class SMTIModel (sz:Long, seed:Long){
 			var maxi:Int = findMax(-1n, -1n);	/* find max */
 			var bpiMaxi:Int = bpi(maxi);
 			var otheri:Int; 
-			//Console.OUT.println("Reset maxi= "+maxi+" bpiMaxi = "+ bpiMaxi);
+			///Console.OUT.println("Reset maxi= "+maxi+" bpiMaxi = "+ bpiMaxi);
 			swapVariables(maxi, bpiMaxi);
 		 	if (nbBP > 1n && r.randomDouble() < 0.98 &&  (otheri = findMax(maxi,bpiMaxi)) >= 0n){
-		 		//Console.OUT.println("Reset otheri= "+otheri+" bpi(otheri) = "+ bpi(otheri));
+		 		///Console.OUT.println("Reset otheri= "+otheri+" bpi(otheri) = "+ bpi(otheri));
 				swapVariables(otheri, bpi(otheri));
 			}else {
 				val i = r.randomInt(length);
 				val j = r.randomInt(length);
+				///Console.OUT.println("Reset no 2nd BP i= "+i+" j = "+ j);
 				swapVariables(i, j);
 			}
 		}else {
-			val i = r.randomInt(length);
-			val j = r.randomInt(length);
-			swapVariables(i, j);
+			if(nbSingles > 0n){
+				val i = r.randomInt(nbSingles);
+				val j = r.randomInt(length);
+				///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
+				swapVariables(singV(i), j);
+			}else{
+				val i = r.randomInt(length);
+				val j = r.randomInt(length);
+				///Console.OUT.println("Reset no BP i= "+i+" j = "+ j);
+				swapVariables(i, j);
+			}
 		}
 		
-		// 2nd SINGLES
+		//2nd SINGLES
 		// if(nbSingles >= 2n){
 		// 	val i = r.randomInt(nbSingles);
 		// 	val j = r.randomInt(nbSingles);
-		// 	//Console.OUT.println("Reset out single singV(i)= "+singV(i)+"singV(j) = "+ singV(j)+"  nbSingles="+nbSingles);
+		// 	///Console.OUT.println("Reset out single singV(i)= "+singV(i)+"singV(j) = "+ singV(j)+"  nbSingles="+nbSingles);
 		// 	swapVariables(singV(i), singV(i));
-		//  }
-		//  else if(nbSingles < 2n){
+		//  } else if(nbSingles < 2n){
 		// 	val j = r.randomInt(length);
-		// 	//Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
+		// 	///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
 		// 	swapVariables(singV(0), j);
 		// }
+		
+		// if(nbSingles > 0n){
+		// 	val i = r.randomInt(nbSingles);
+		// 	val j = r.randomInt(length);
+		// 	///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
+		// 	swapVariables(singV(i), j);
+		// }
 
-		// 3rd RANDOMNESS
+		// // 3rd RANDOMNESS
 		// if(r.randomDouble() < 0.05){ // size 100 -> 1   size 1000 -> 0.1
 		// 	val i = r.randomInt(length);
 		// 	val j = r.randomInt(length);
-		// 	//Console.OUT.println("Reset out i= "+i+" j = "+ j);
+		// 	Console.OUT.println("Reset out i= "+i+" j = "+ j);
 		// 	swapVariables(i, j);
 		// }
 		
