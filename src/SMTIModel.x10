@@ -92,13 +92,13 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.freezeSwap = 0n;
 		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
-		solverParams.restartLimit = 30n*length; //30
+		solverParams.restartLimit = 30n*length; //30//1000000000n;
 		solverParams.restartMax = 0n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
 		
-	    solverParams.probChangeVector = 5n;
+	    solverParams.probChangeVector = 10n;
 	    
 	    //weight = System.getenv().get("V")!=null?length:1n;
 	    //Console.OUT.println("weight= "+weight);
@@ -610,6 +610,17 @@ public class SMTIModel (sz:Long, seed:Long){
 				Console.OUT.printf("%4d->%-4d",(i+1),variables(i));
 		}
 		Console.OUT.print("\n");
+	}
+	
+	public def displaySolution2 (match:Valuation(sz)){	
+		Console.OUT.print("#Sol:");
+		for (i in match.range()){
+			if(revpM(i)(match(i)-1n)==0n){
+				Console.OUT.print(" - ");
+			}else
+				Console.OUT.print(" "+variables(i)+" ");
+		}
+		//Console.OUT.print("\n");
 	}
 	
 	private def printPreferencesTables(){

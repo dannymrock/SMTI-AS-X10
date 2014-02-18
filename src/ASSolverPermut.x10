@@ -206,7 +206,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 				
 	 				
 	 			}
-			} else {
+			}else {
 				mark(maxI) = nbSwap + solverP.freezeSwap; //Mark(maxI, ad.freeze_swap);
 				mark(minJ) = nbSwap + solverP.freezeSwap; //Mark(minJ, ad.freeze_swap);
 			
@@ -248,9 +248,6 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		// 		bestnbSG = csp_.getnbSingles();
 	 		// 	}
 	 		// }
-	 		
-	 		
-	 		
 	 		
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities

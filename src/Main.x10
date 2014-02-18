@@ -29,7 +29,8 @@ public class Main {
 		    Option("n", "", "nodes_per_team parameter. Default 4."),
 		    Option("k", "", "poolsize."),
 		    Option("y", "", "seed. Default random"),
-		    Option("x", "", "minimum permisible distance.")
+		    Option("x", "", "minimum permisible distance."),
+		    Option("o", "", "output format: machine 0, info 1")
 		    ]);
 		
 		val p1			= opts("-d", 50n);
@@ -44,17 +45,30 @@ public class Main {
 		val poolSize	= opts("-k", 4n);
 		val inSeed		= opts("-y", 0);
 		val minDistance	= opts("-x", 0.3);
+		val outFormat	= opts("-o", 1n);
+		
 		var vectorSize:Long=0;
+		
 		//at(Main.param) Main.param().poolSize = poolSize;
-
-		Console.OUT.println("Prob P1 deletions: "+p1+"\n Prob P2 - ties:"+p2+"\n Size: "+size+"\nNumber of repetitions: "+testNo+
+		
+		if (outFormat == 0n){
+			Console.OUT.println("Parameters\tP1="+p1+"\tP2="+p2+"\tsize="+size+"\tsamples="+testNo
+					+"\tmode="+(solverMode==0n ?"onlyPlaces":"hybrid")+"\tcomm="+comm+"\tintra-Team="
+					+intraTI+"\tinter-Team="+interTI+"\tminDistance="+minDistance+"\tpoolsize="+poolSize
+					+"\tplaces="+Place.MAX_PLACES+"\tnpT="+nodesPTeam);
+		}else{
+			Console.OUT.println("Prob P1 deletions: "+p1+"\n Prob P2 - ties:"+p2+"\n Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"Only Places":"Hybrid (Places and Activities)")+
 							"\nCommunication strategy: "+comm+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
 							"\nPool Size: "+poolSize);
-		
+
+			Console.OUT.println("Using multi-walks with "+Place.MAX_PLACES+" Places");
+			Console.OUT.println("There are "+Place.MAX_PLACES/nodesPTeam+" teams each one with "+nodesPTeam+" explorer places. "+
+					Place.MAX_PLACES+" explorers in total (places)");
+			
+		}
 				
-		Logger.debug(()=>{"Stable Marriage Problem"});
 		vectorSize=size;
 				
 		/*
@@ -63,18 +77,16 @@ public class Main {
 		val accStats = new CSPStats();
 		val vectorSz = vectorSize;
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];
-		
-		Console.OUT.println("Using multi-walks with "+Place.MAX_PLACES+" Places");
-		Console.OUT.println("There are "+Place.MAX_PLACES/nodesPTeam+" teams each one with "+nodesPTeam+" explorer places. "+
-			Place.MAX_PLACES+" explorers in total (places)");
 			
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
 				()=>new PlacesMultiWalks(vectorSz, intraTI, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
 			
-				
-		Console.OUT.println("|Count| Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  |  FR |");
-		Console.OUT.println("|-----|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|");
-		
+		if (outFormat == 0n){
+			Console.OUT.println("seed\tcount\ttime(s)\titers\tplace\tlocMin\tswaps\tresets\tsa/it\treSta\tbp\tsingles\tChanges\tfr\tps\tsolution");
+		}else{
+			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
+			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+		}
 		/*
 		 *  Execution loop
 		 */
@@ -86,10 +98,14 @@ public class Main {
 			
 			//Solve the problem
 			//val stats : CSPStats;
-			val random = new Random();
 			
-			val seed = (inSeed == 0) ? random.nextLong():inSeed;
-			Logger.info(()=>{"Seed: "+seed});
+			// val random = new Random();		
+			// val seed = (inSeed == 0) ? random.nextLong():inSeed;
+			
+			val seed = (inSeed == 0) ? j as Long:inSeed;
+			
+			
+			Logger.debug(()=>{"Problem seed: "+seed});
 			
 			val cspGen : ()=>SMTIModel(vectorSz);
 			
@@ -108,14 +124,16 @@ public class Main {
 			// Detect if there is no winner
 			solvers().verifyWinner(solvers);
 			
-			
 			//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
-			
-			Console.OUT.printf("\r");
-			solvers().printStats(j);
-			solvers().printAVG(j);
-			Console.OUT.flush();
-			
+			if(outFormat == 0n){
+				Console.OUT.print(seed+"\t");
+				solvers().printStats(j,outFormat);
+			}else{
+				Console.OUT.printf("\r");
+				solvers().printStats(j,outFormat);
+				solvers().printAVG(j,outFormat);
+				Console.OUT.flush();
+			}
 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			
 			
@@ -125,14 +143,17 @@ public class Main {
 
 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 		}
-		Console.OUT.printf("\r");
-		Console.OUT.println("|-----|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|");
-		solvers().printAVG(testNo);
-		//accStats.printAVG(testNo);
-		Console.OUT.printf("\n");
-		
+		if(outFormat == 0n){
+			solvers().printAVG(testNo,outFormat);
+		}else{
+			Console.OUT.printf("\r");
+			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
+			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+			solvers().printAVG(testNo,outFormat);
+			//accStats.printAVG(testNo);
+			Console.OUT.printf("\n");
+		}
 		return;
 	}
-
-	
 }

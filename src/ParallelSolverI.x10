@@ -72,8 +72,8 @@ public interface ParallelSolverI {
     def getCurrentData():Maybe[CSPSharedUnit(sz)];
 
     def accStats(CSPStats):void;
-    def printStats(count:Int):void;
-    def printAVG(count:Int):void;
+    def printStats(count:Int, oF:Int):void;
+    def printAVG(count:Int, oF:Int):void;
     
     def verifyWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
     public def getBP():Int;

@@ -115,12 +115,12 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		bcost = cost;
     		
     		if (winner) {
-    			csp_.displaySolution(solver.bestConf as Valuation(sz));
     			time += System.nanoTime();
     			setStats1(solvers);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
+    			csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
-    			//csp_.displaySolution();
+    			
     		}
     	}
     	extTime += System.nanoTime();
@@ -142,7 +142,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	
 	//val monitor = new Monitor("PlacesMultiWalks"); 
 	public def kill() {
-		solver.kill=true;
+		if (solver != null) solver.kill=true;
 	}
     val winnerLatch = new AtomicBoolean(false);
     public def announceWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)], p:Long):Boolean {
@@ -182,11 +182,11 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	accStats(stats);
     }
     
-	public def printStats(count:Int):void {
-	    stats.print(count);
+	public def printStats(count:Int, oF:Int):void {
+	    stats.print(count,oF);
 	}
-	public def printAVG(count:Int):void {
-	    accStats.printAVG(count);
+	public def printAVG(count:Int, oF:Int):void {
+	    accStats.printAVG(count,oF);
 	}
 	public def tryInsertVector(cost:Int, variables:Rail[Int]{self.size==sz}, place:Int) {
 		commM.ep.tryInsertVector(cost, variables, place);
@@ -223,7 +223,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		var bestPlace:Place = here; 
 		
 		if (stats.explorer == -1n){
-			Logger.info(()=>"no winner found");
+			Logger.info(()=>"No winner found");
 			
 			for (k in Place.places()){
 				val cBP = at(k) ss().getBP();
@@ -234,7 +234,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 					minCost = cCost;
 					bestPlace = k;
 				} else if(cBP == minBP){
-					if( cCost < minCost){
+					if( cCost <= minCost){
 						minBP = cBP;
 						minCost = cCost;
 						bestPlace = k;
@@ -242,7 +242,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 				}
 			}
 			val p = bestPlace; val bp = minBP; val cost = minCost;
-			Logger.info(()=>"best place="+p+" BP= "+bp+" singles"+(cost-bp));
+			Logger.info(()=>"best "+p+" BP= "+bp+" singles= "+(cost-bp));
 			
 			
 			at (bestPlace){
@@ -251,6 +251,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 				//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
 				//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
 				//csp_.displaySolution();
+				Console.OUT.println("");
 			}
 		}
 	}

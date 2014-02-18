@@ -108,28 +108,38 @@ public class CSPStats{
 	 * 	Print the stat values
 	 * 	@param count Number of this iteration
 	 */
-	public def print(count:Int){
-		val sameIter : Float = same /(iters as Float);
-		//val changeF : Float = (change as Float)/(count as Float);
-		Console.OUT.printf("| %3d | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3d | %3d |\n",swaps,reset,sameIter,restart, bp, singles);
-		
+	public def print(count:Int, oF:Int){
+		val sameIter : Double = same /iters;
+		//val changeF : Double = (change as Double)/count;
+		if (oF == 0n){
+			Console.OUT.println(count+"\t"+time+"\t"+iters+"\t"+team+"\t"+explorer+"\t"+locmin+"\t"+swaps
+					+"\t"+reset+"\t"+sameIter+"\t"+restart+"\t"+bp+"\t"+singles+"\t"+change+"\t"+forceRestart+"\t"+((bp == 0n && singles == 0n)?1n:0n));
+		}else{
+			Console.OUT.printf("|  %3d  | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
+			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3d | %3d |",swaps,reset,sameIter,restart, bp, singles);
+			Console.OUT.printf(" %4d | %3d | %3d |\n", change, forceRestart,((bp == 0n && singles == 0n)?1:0));
+		}
 	}
 
 	/**
 	 * 	Print the stat averages
 	 * 	@param no total number of iterations
 	 */
-	public def printAVG(no:Int){ 
-	   // val no = no1 as Float;
-		val sameIter : Float = (same as Float)/(iters as Float);
-		val changeF : Float = (change as Float)/(no as Float);
-
-		Console.OUT.printf("| avg | %8.4f | %8d |  N/A  | %8d |",time/no, iters/no, locmin/no);
-		Console.OUT.printf(" %8d | %8d | %5.2f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
-				bp/(no as float), singles/(no as float));
-		Console.OUT.printf( " %3.1f \n",(accPM/(no as float))*100.0);
-		
+	public def printAVG(no:Int, oF:Int){ 
+	   // val no = no1 as Double;
+		val sameIter : Double = (same as Double)/iters;
+		val changeF : Double = (change as Double)/no;
+		if (oF == 0n){
+			Console.OUT.print("AVG\t"+time/no+"\t"+iters/no+"\t"+locmin/no+"\t"+swaps/no+"\t"+reset/no
+					+"\t"+sameIter+"\t"+restart/no+"\t"+bp/(no as float)+"\t"+singles/(no as Double)
+					+"\t"+changeF+"\t"+forceRestart/no+"\t"+accPM);
+		}else{
+			Console.OUT.printf("|avg-%3d| %8.4f | %8d |  N/A  | %8d |", no, time/no, iters/no, locmin/no);
+			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
+				bp/(no as float), singles/(no as Double));
+			Console.OUT.printf("%4.1f | %3d |", changeF, forceRestart/no);
+			Console.OUT.printf(" %3d |\n",accPM);
+		}
 	}
 	
 	public def clear():void{ 
