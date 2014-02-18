@@ -105,7 +105,7 @@ public class Main {
 			val seed = (inSeed == 0) ? j as Long:inSeed;
 			
 			
-			Logger.debug(()=>{"Problem seed: "+seed});
+			Logger.info(()=>{"Problem seed: "+seed});
 			
 			val cspGen : ()=>SMTIModel(vectorSz);
 			

@@ -2,7 +2,7 @@ public class Logger {
     public static val DEBUG=0;
     public static val LOG=1;
     public static val INFO=2;
-    public static val LEVEL=3;
+    public static val LEVEL=INFO;
     
     static def out(s:String) { 
         Console.OUT.println("[" + here + ":" + Runtime.workerId()+ " " + System.nanoTime() 
