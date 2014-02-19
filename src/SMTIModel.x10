@@ -613,7 +613,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def displaySolution2 (match:Valuation(sz)){	
-		Console.OUT.print("#Sol:");
+		Console.OUT.print("#Sol in  "+here);
 		for (i in match.range()){
 			if(revpM(i)(match(i)-1n)==0n){
 				Console.OUT.print(" - ");

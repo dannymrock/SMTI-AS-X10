@@ -304,7 +304,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		//Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+totalCost});
+		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+bestCostSMTI});
 		
 		if (bestCostSMTI == 0n){
 			Logger.info(()=>{"perfect marriage found "});

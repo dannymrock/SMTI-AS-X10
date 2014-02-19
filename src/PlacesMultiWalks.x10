@@ -142,18 +142,23 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	
 	//val monitor = new Monitor("PlacesMultiWalks"); 
 	public def kill() {
-		if (solver != null) solver.kill=true;
+		if (solver != null) {
+			solver.kill=true;
+			Logger.info(()=>{"Kill=true"});
+		}
 	}
     val winnerLatch = new AtomicBoolean(false);
     public def announceWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)], p:Long):Boolean {
     	val result = winnerLatch.compareAndSet(false, true);
     	
-    	Logger.debug(()=> "  PlacesMultiWalks: announceWinner result=" + result + " for " + p + " this=" + this );
+    	Logger.info(()=> "  PlacesMultiWalks: announceWinner result=" + result + " for " + p + " this=" + this );
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
     				at(k) async ss().kill();
     	}
+    	Logger.info(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
+    	
     	return result;
     }
     /**
