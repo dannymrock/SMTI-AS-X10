@@ -110,6 +110,9 @@ public class Main {
 		
 		val seeds = new Rail[Long](Place.MAX_PLACES, 0);
 		
+		var totalExTimes :Long = 0;
+		var totalCrTimes :Long = 0;
+		var totalInTimes :Long = 0;
 		
 		for (var j : Int = 1n; j <= testNo ; j++ ){
 			
@@ -129,6 +132,9 @@ public class Main {
 			var creationTime:Long = -System.nanoTime();
 			SMTIModel.createPrefs(p1, p2, size, random.nextLong(), mPref, wPref);
 			val cT= creationTime += System.nanoTime();
+			totalCrTimes += creationTime;
+			
+			
 			Logger.info(()=>{"Time to create the problem="+cT/1e9});
 			
 			var extTime:Long = -System.nanoTime();
@@ -147,6 +153,7 @@ public class Main {
 			}
 			
 			val instTime = System.nanoTime()+extTime;
+			totalInTimes += instTime;
 			Logger.info(()=>" Time to install solvers= "+instTime/1e9);
 			
 			finish for (p in Place.places()) at (p) async{
@@ -160,7 +167,9 @@ public class Main {
 			
 			extTime += System.nanoTime();
 			val extt = extTime;
+			totalExTimes += extTime;
 			Logger.info(()=>{"ext Time="+extt/1e9});
+			
 			
 			//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
 			if(outFormat == 0n){
@@ -195,6 +204,11 @@ public class Main {
 			//accStats.printAVG(testNo);
 			Console.OUT.printf("\n");
 		}
+		
+		val avgcr =totalCrTimes/testNo as Double; val avgins=totalInTimes/testNo as Double; 
+		val avgext=totalExTimes/testNo as Double;
+		Logger.info(()=>{"AVG Creation Time="+(avgcr/1e9)+" AVG intall Time="+(avgins/1e9)+" AVG external solving Time="+(avgext/1e9)});
+		
 		return;
 	}
 }
