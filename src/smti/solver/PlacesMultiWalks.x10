@@ -150,7 +150,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	//val monitor = new Monitor("PlacesMultiWalks"); 
 	public def kill() {
 		if (solver != null) {
-			solver.kill = true;
+			solver.kill.set(true);//solver.kill = true;
 			Logger.debug(()=>{"Kill=true"});
 		}else{
 			Logger.debug(()=>{"Solver is not yet started. No kill set"});
@@ -165,7 +165,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
-    				at(k) ss().kill();  // Testing the use of this async v1
+    				at(k) async ss().kill();  // Testing the use of this async v1
     	}
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
     	

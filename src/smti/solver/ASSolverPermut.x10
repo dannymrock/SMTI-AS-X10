@@ -77,8 +77,8 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	val bestConf = new Rail[Int](size, 0n);
 	var bestCost:Int = x10.lang.Int.MAX_VALUE;
 	
-	//val kill = new AtomicBoolean(false);
-	var kill:Boolean = false;
+	val kill = new AtomicBoolean(false);
+	//var kill:Boolean = false;
 	
 	/**
 	 *  solve( csp : SMTIModel ) : Int
@@ -238,7 +238,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
-	 		if (kill)	{
+	 		if (kill.get())	{
 	 		    Logger.debug(()=>" killed!");
 	 		    break;		// Check if other place or activity have finished
 	 		}
