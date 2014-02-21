@@ -207,7 +207,7 @@ public class Main {
 		
 		val avgcr =totalCrTimes/testNo as Double; val avgins=totalInTimes/testNo as Double; 
 		val avgext=totalExTimes/testNo as Double;
-		Logger.info(()=>{"AVG Creation Time="+(avgcr/1e9)+" AVG intall Time="+(avgins/1e9)+" AVG external solving Time="+(avgext/1e9)});
+		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG install Time= "+(avgins/1e9)+" AVG external solving Time= "+(avgext/1e9)});
 		
 		return;
 	}
