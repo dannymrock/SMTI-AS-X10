@@ -67,16 +67,15 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     }
     var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
     
-    public def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed :Long ):void{
+    public def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long ):void{
     	solvers = st;
     	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
     	val size = sz as Int;
     	var extTime : Long = -System.nanoTime();
     	
-    	this.seed = seed;
+    	this.seed = seed_;
+    	Logger.debug(()=>{"seed:"+seed});
     	
-    	//val seed = random.nextLong();
-    	//Console.OUT.println("seed:"+seed);
     	var nsize:Int = size;
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem

@@ -94,7 +94,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.freezeSwap = 0n;
 		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
 		solverParams.resetPercent = 0n;
-		solverParams.restartLimit = /*1000000000n;*/30n*length; 
+		solverParams.restartLimit = 1000000000n;/*30n*length*/; 
 		solverParams.restartMax = 0n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;

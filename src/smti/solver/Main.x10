@@ -108,6 +108,9 @@ public class Main {
   		// val s = seed;
   		// Logger.info(()=>{"Main seed: "+s});
 		
+		val seeds = new Rail[Long](Place.MAX_PLACES, 0);
+		
+		
 		for (var j : Int = 1n; j <= testNo ; j++ ){
 			
 			//Solve the problem
@@ -132,9 +135,15 @@ public class Main {
 			
 			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mPref, wPref) 
 													as SMTIModel(vectorSz);
-			
-			finish for (p in Place.places()) at (p) async{
-				solvers().install(solvers, cspGen, random.nextLong());
+
+			finish for (p in Place.places()) {
+
+				// Create a different seed for every place
+				val solverSeed = random.nextLong();
+				
+				at (p) async{
+					solvers().install(solvers, cspGen, solverSeed);
+				}
 			}
 			
 			val instTime = System.nanoTime()+extTime;
