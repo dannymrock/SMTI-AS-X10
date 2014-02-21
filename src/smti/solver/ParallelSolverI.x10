@@ -78,9 +78,9 @@ public interface ParallelSolverI {
     def printAVG(count:Int, oF:Int):void;
     
     def verifyWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
-    public def getBP():Int;
+    
     public def getCost():Int;
-    def setStats1(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
+    def setStats_(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
     def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed :Long ):void;
     	
     

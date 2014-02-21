@@ -131,20 +131,13 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		bcost = cost;
     		
     		if (winner) {
-    			setStats1(solvers);
+    			setStats_(solvers);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
     			csp_.displaySolution2(solver.bestConf as Valuation(sz));
-    			Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
+    			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
     			
     		}
     	}
-    	//extTime += System.nanoTime();
-    	//time += System.nanoTime();
-    	
-    	// if (!solver.kill){
-    	// 	//copy vector
-    	// 	Rail.copy(solver.bestConf, bestC);
-    	// }
     }
 	
     @Inline public def getIPVector(csp_:SMTIModel(sz), myCost:Int):Boolean 
@@ -183,7 +176,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
      * Called by winning place to set the stats at place zero so they
      * can be printed out.
      */
-    public def setStats1(ss:PlaceLocalHandle[ParallelSolverI(sz)]  ){
+    public def setStats_(ss:PlaceLocalHandle[ParallelSolverI(sz)]  ){
     	val winPlace = here.id;
     	val time = time/1e9;
     	val iters = solver.nbIterTot;
@@ -193,11 +186,12 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val same = solver.nbSameVarTot;
     	val restart = solver.nbRestart;
     	val change = solver.nbChangeV;
-        val bp = solver.bestnbBP;
-        val singles = solver.bestnbSG;
+        val bp = solver.bestCost/sz;
+        val singles = solver.bestCost - bp;
     	
     	at (Place.FIRST_PLACE) 
-    	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n, bp, singles);
+    	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n, 
+    			bp as Int, singles as Int);
     }
     public def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int, 
     		fr : Int, bp:Int, sg:Int) {
@@ -230,18 +224,15 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		return null;
 	}
 	
-	public def getBP():Int{
-		return solver.bestnbBP;
-	}
 	public def getCost():Int{
-		return solver.bestCostSMTI;
+		return solver.bestCost;
 	}
 	
 	public def verifyWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void{
 		// detect if no winner has been found
 		// search best solution in all places
 		// set stats objects
-		var minBP:Int = sz as Int + 1n;
+		//var minBP:Int = sz as Int + 1n;
 		var minCost:Int = x10.lang.Int.MAX_VALUE;
 		var bestPlace:Place = here; 
 		
@@ -249,28 +240,32 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 			Logger.debug(()=>"No winner found");
 			
 			for (k in Place.places()){
-				val cBP = at(k) ss().getBP();
+				//val cBP = at(k) ss().getBP();
 				val cCost = at(k) ss().getCost();
-				
-				if(cBP < minBP){
-					minBP = cBP;
+
+				if(cCost < minCost){
 					minCost = cCost;
 					bestPlace = k;
-				} else if(cBP == minBP){
-					if( cCost <= minCost){
-						minBP = cBP;
-						minCost = cCost;
-						bestPlace = k;
-					}
 				}
+				// if(cBP < minBP){
+				// 	minBP = cBP;
+				// 	minCost = cCost;
+				// 	bestPlace = k;
+				// } else if(cBP == minBP){
+				// 	if( cCost <= minCost){
+				// 		minBP = cBP;
+				// 		minCost = cCost;
+				// 		bestPlace = k;
+				// 	}
+				// }
 			}
-			val p = bestPlace; val bp = minBP; val cost = minCost;
+			val p = bestPlace; val bp = minCost/sz; val cost = minCost;
 			Logger.debug(()=>"best "+p+" BP= "+bp+" singles= "+(cost-bp));
 			
 			
 			at (bestPlace){
 				//csp_.displaySolution(solver.bestConf as Valuation(sz));
-				ss().setStats1(ss);
+				ss().setStats_(ss);
 				//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
 				//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
 				//csp_.displaySolution();
