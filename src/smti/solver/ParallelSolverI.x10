@@ -21,7 +21,7 @@ public interface ParallelSolverI {
      * Solves the problem, which is specified by cspGen. We expect (but this is not checked in the code) that
      * all instances of the ParallelSolverI frame (one in each place) is solving the same problem.
      */
-    def solve(st:PlaceLocalHandle[ParallelSolverI(sz)] ):void;
+   // def solve(st:PlaceLocalHandle[ParallelSolverI(sz)] ):void;
 
     /**
      * Get some best solution from the communication partner or my local pool. If its
@@ -81,7 +81,8 @@ public interface ParallelSolverI {
     
     public def getCost():Int;
     def setStats_(ss:PlaceLocalHandle[ParallelSolverI(sz)]):void;
-    def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed :Long ):void;
+    
+    def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed :Long ):void;
     	
     
 

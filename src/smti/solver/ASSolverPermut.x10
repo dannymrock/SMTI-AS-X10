@@ -77,8 +77,15 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	val bestConf = new Rail[Int](size, 0n);
 	var bestCost:Int = x10.lang.Int.MAX_VALUE;
 	
-	val kill = new AtomicBoolean(false);
-	//var kill:Boolean = false;
+	//val kill : AtomicBoolean;
+	//var kill:Boolean;
+	var kill:Boolean = false;
+	
+	// public def this(sz:Long, size:Int, seed:Long, solver:ParallelSolverI(sz)){
+	// 	property(sz, size, seed, solver);
+	// 	kill=new AtomicBoolean(false);
+	// 	//kill=false;
+	// }
 	
 	/**
 	 *  solve( csp : SMTIModel ) : Int
@@ -238,7 +245,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 		
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
-	 		if (kill.get())	{
+	 		if (kill){	//if (kill.get()){ 
 	 		    Logger.debug(()=>" killed!");
 	 		    break;		// Check if other place or activity have finished
 	 		}
@@ -291,10 +298,10 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+bestCost+"" });
+		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+bestCost+" kill="+kill });
 		
 		if (bestCost == 0n){
-			Logger.info(()=>{"perfect marriage found "});
+			Logger.debug(()=>{"perfect marriage found "});
 			//csp_.displaySolution(bestConf as Valuation(sz));
 		}
 		// else{

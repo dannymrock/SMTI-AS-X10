@@ -104,6 +104,7 @@ public class CSPStats{
 	        	accPM++;
 	       // Unit()
 	   // });
+	        //Logger.info(()=>{"number of Perfect sol:"+accPM});
 	}
 	
 	/**

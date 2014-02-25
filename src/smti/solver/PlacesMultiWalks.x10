@@ -18,6 +18,7 @@ import x10.util.Random;
 import x10.array.*;
 import x10.compiler.Inline;
 import x10.util.concurrent.AtomicBoolean; 
+import x10.util.Team;
 
 /**
  * Each place has solvers, a PlaceLocalHandle[PlaceMultiWalk(sz)].
@@ -65,49 +66,51 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	nbExplorerPT = npT; // will be a parameter 
     	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
     }
-    var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
+    //var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
     
-    public def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long ):void{
-    	solvers = st;
-    	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
-    	val size = sz as Int;
-    	var extTime : Long = -System.nanoTime();
-    	
-    	this.seed = seed_;
-    	Logger.debug(()=>{"seed:"+seed});
-    	
-    	var nsize:Int = size;
-    	
-    	csp_ = cspGen(); // use the supplied generator to generate the problem
-    	
-    	//conf = new ASSolverConf(sz, 1n /*ASSolverConf.USE_PLACES*/, solvers, updateI,0n, commOption, poolSize, nTeams );
-    	commM = new CommManager(sz, 0n , solvers, updateI,0n, poolSize, nTeams, seed );
-    	val ss = st() as ParallelSolverI(sz);
-    	//solver = new ASSolverPermut(sz, nsize, seed, ss);
-    	
-    	//Do I need to get more elegant way to obtain different seeds here? 
-    	//I'm currently using the solver id (place id) as seed
-    	
-    	solver = new ASSolverPermut(sz, nsize, seed, ss);
-    	
-    	
-    }
     
+    
+    
+    // public def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long ):void{
+    // 	
+    // }
+    	
     
     /** 
      * 	Solve the csp problem with MAX_PLACES instance of AS solver
      * 	The first one that reach a valid solution sends a kill to the others
      * 	to finish the process.
-	 * 
-	 * 	@param size size of the csp problem
-	 * 	@param cspProblem code with the problem to be solved (1 for Magic Square Problems, other number for Queens Problem)
-	 * 	@return cost of the solution
-	 */
-    public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)] ):void { 
+     * 
+     * 	@param size size of the csp problem
+     * 	@param cspProblem code with the problem to be solved (1 for Magic Square Problems, other number for Queens Problem)
+     * 	@return cost of the solution
+     */
+    public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long):void { 
+    	
+    	
     	val solvers = st;
     	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
+    	val size = sz as Int;
+    	var nsize:Int = size;
+    	
+    	this.seed = seed_;
     	val random = new Random(seed);
     	var cost:Int = x10.lang.Int.MAX_VALUE;
+    	
+    	//Logger.debug(()=>{"   Seed in solver:"+seed});
+    	val ss = st() as ParallelSolverI(sz);
+    	
+    	csp_ = cspGen(); // use the supplied generator to generate the problem
+    	solver = new ASSolverPermut(sz, nsize, seed, ss);
+    	//conf = new ASSolverConf(sz, 1n /*ASSolverConf.USE_PLACES*/, solvers, updateI,0n, commOption, poolSize, nTeams );
+    	commM = new CommManager(sz, 0n , solvers, updateI,0n, poolSize, nTeams, seed );
+    	
+    	//solver = new ASSolverPermut(sz, nsize, seed, ss);
+    	
+    	//Do I need to get more elegant way to obtain different seeds here? 
+    	//I'm currently using the solver id (place id) as seed
+    	
+    	//Team.WORLD.barrier();
     	
     	/***/
     	//taking the time only to solve the problem, not included the time to signal the others explorers
@@ -150,10 +153,10 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	//val monitor = new Monitor("PlacesMultiWalks"); 
 	public def kill() {
 		if (solver != null) {
-			solver.kill.set(true);//solver.kill = true;
+			solver.kill = true; //solver.kill.set(true); //
 			Logger.debug(()=>{"Kill=true"});
 		}else{
-			Logger.debug(()=>{"Solver is not yet started. No kill set"});
+			Logger.info(()=>{"Solver is not yet started. Kill is not set"});
 			
 		}
 	}
@@ -165,7 +168,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
-    				at(k) async ss().kill();  // Testing the use of this async v1
+    				at(k) ss().kill(); //at(k) async ss().kill();  // Testing the use of this async v1
     	}
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
     	
@@ -236,7 +239,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		var bestPlace:Place = here; 
 		
 		if (stats.explorer == -1n){
-			Logger.debug(()=>"No winner found");
+			Logger.info(()=>"No winner found");
 			
 			for (k in Place.places()){
 				//val cBP = at(k) ss().getBP();

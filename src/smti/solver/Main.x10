@@ -14,6 +14,7 @@ import x10.io.FileWriter;
 import x10.util.OptionsParser;
 import x10.util.Option;
 import x10.util.Random;
+import x10.compiler.Pragma;
 
 public class Main {
 	public static def main(args:Rail[String]):void{
@@ -141,24 +142,31 @@ public class Main {
 			
 			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mPref, wPref) 
 													as SMTIModel(vectorSz);
+			
+			
+			//val solverSeed = new Rail[Long](Place.MAX_PLACES);
+			//for (p in solverSeed) solverSeed(p) = random.nextLong();
+			
+			
+			// PlaceGroup.WORLD.broadcastFlat(()=>{
+			// 	solvers().solve(solvers, cspGen, random.nextLong());
+			// });
 
 			finish for (p in Place.places()) {
-
-				// Create a different seed for every place
-				val solverSeed = random.nextLong();
-				
+				val solverSeed = random.nextLong();	
 				at (p) async{
-					solvers().install(solvers, cspGen, solverSeed);
-				}
+					solvers().solve(solvers, cspGen, solverSeed);
+				}	
 			}
 			
-			val instTime = System.nanoTime()+extTime;
-			totalInTimes += instTime;
-			Logger.info(()=>" Time to install solvers= "+instTime/1e9);
+			// @Pragma(Pragma.FINISH_SPMD) finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
+			// 	val max = here.id; val min = Math.max(max-31, 0);
+			// 	@Pragma(Pragma.FINISH_SPMD)finish for(k in min..max){
+			// 		val solverSeed = random.nextLong();
+			// 		at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
+			// 	}
+			// }
 			
-			finish for (p in Place.places()) at (p) async{
-				solvers().solve(solvers);
-			}
 			
 			Logger.debug(()=>" Main: End solve function  in all places ");
 			
@@ -205,9 +213,11 @@ public class Main {
 			Console.OUT.printf("\n");
 		}
 		
-		val avgcr =totalCrTimes/testNo as Double; val avgins=totalInTimes/testNo as Double; 
+		val avgcr =totalCrTimes/testNo as Double; //val avgins=totalInTimes/testNo as Double; 
 		val avgext=totalExTimes/testNo as Double;
-		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG install Time= "+(avgins/1e9)+" AVG external solving Time= "+(avgext/1e9)});
+		//Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG install Time= "+(avgins/1e9)+" AVG external solving Time= "+(avgext/1e9)});
+		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)});
+		
 		
 		return;
 	}
