@@ -109,7 +109,7 @@ public class Main {
   		// val s = seed;
   		// Logger.info(()=>{"Main seed: "+s});
 		
-		val seeds = new Rail[Long](Place.MAX_PLACES, 0);
+		//val seeds = new Rail[Long](Place.MAX_PLACES, 0);
 		
 		var totalExTimes :Long = 0;
 		var totalCrTimes :Long = 0;

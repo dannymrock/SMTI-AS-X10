@@ -191,7 +191,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
         val bp = solver.bestCost/sz;
         val singles = solver.bestCost - bp;
     	
-    	at (Place.FIRST_PLACE) 
+    	at (Place.FIRST_PLACE) async 
     	ss().setStats(0n, winPlace as Int, 0n, time, iters, locmin, swaps, reset, same, restart, change,0n, 
     			bp as Int, singles as Int);
     }
