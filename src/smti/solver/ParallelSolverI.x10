@@ -84,7 +84,7 @@ public interface ParallelSolverI {
     
     def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed :Long ):void;
     	
-    
+ 	def installSolver(st:PlaceLocalHandle[ParallelSolverI(sz)] ):void;
 
 
 }

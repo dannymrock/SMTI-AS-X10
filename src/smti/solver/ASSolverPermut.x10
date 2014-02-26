@@ -16,7 +16,7 @@ import x10.util.concurrent.AtomicBoolean;
  * 	
  */
 
-public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI(sz)) {
+public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSolverI(sz)) {
 
     val mark = new Rail[Int] (size, 0n); 
 	val solverP = new ASSolverParameters();
@@ -29,7 +29,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	//var bestCost : Int;
 	var newCost : Int;
 	var totalCost : Int;
-	val random = new Random(seed);
+	var random : Random;
 	
 
 	var forceRestart : Boolean = false;
@@ -80,12 +80,19 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	//val kill : AtomicBoolean;
 	//var kill:Boolean;
 	var kill:Boolean = false;
-	
+	var seed:Long;	
 	// public def this(sz:Long, size:Int, seed:Long, solver:ParallelSolverI(sz)){
 	// 	property(sz, size, seed, solver);
 	// 	kill=new AtomicBoolean(false);
 	// 	//kill=false;
 	// }
+	
+	
+	public def setSeed(seed:Long){
+		this.seed = seed;
+		random = new Random(seed);
+	}
+	
 	
 	/**
 	 *  solve( csp : SMTIModel ) : Int
@@ -246,7 +253,7 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 			// --- Interaction with other solvers -----
 	 		Runtime.probe();		// Give a chance to the other activities
 	 		if (kill){	//if (kill.get()){ 
-	 		    Logger.debug(()=>" killed!");
+	 		    //Logger.debug(()=>" killed!");
 	 		    break;		// Check if other place or activity have finished
 	 		}
 	 	
@@ -491,6 +498,8 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 	 * 	Clear function
 	 */
 	public def clear(){
+		this.kill = false;
+		
 	}
 	
 	/**
@@ -598,6 +607,5 @@ public class ASSolverPermut(sz:Long, size:Int, seed:Long, solver:ParallelSolverI
 		nbReset = 0n;
 		
 	}
-	
 }
 public type ASSolverPermut(s:Long)=ASSolverPermut{self.sz==s};

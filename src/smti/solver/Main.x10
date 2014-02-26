@@ -110,10 +110,20 @@ public class Main {
   		// Logger.info(()=>{"Main seed: "+s});
 		
 		//val seeds = new Rail[Long](Place.MAX_PLACES, 0);
+		var totalInTime :Long = -System.nanoTime();
+		
+		finish for (p in Place.places()) at (p) async{	
+			solvers().installSolver(solvers);
+		}
+		
+		val intime = totalInTime += System.nanoTime();
+		
+		Logger.info(()=>{"install time: "+ intime/1e9});
+		
 		
 		var totalExTimes :Long = 0;
 		var totalCrTimes :Long = 0;
-		var totalInTimes :Long = 0;
+		var totalClearTimes :Long = 0;
 		
 		for (var j : Int = 1n; j <= testNo ; j++ ){
 			
@@ -152,26 +162,28 @@ public class Main {
 			// 	solvers().solve(solvers, cspGen, random.nextLong());
 			// });
 
-			finish for (p in Place.places()) {
-				val solverSeed = random.nextLong();	
-				at (p) async{
-					solvers().solve(solvers, cspGen, solverSeed);
-				}	
-			}
-			
-			// @Pragma(Pragma.FINISH_SPMD) finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
-			// 	val max = here.id; val min = Math.max(max-31, 0);
-			// 	@Pragma(Pragma.FINISH_SPMD)finish for(k in min..max){
-			// 		val solverSeed = random.nextLong();
-			// 		at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
-			// 	}
+			// finish for (p in Place.places()) {
+			// 	val solverSeed = random.nextLong();	
+			// 	at (p) async{
+			// 		solvers().solve(solvers, cspGen, solverSeed);
+			// 	}	
 			// }
+			
+			
+			finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
+				val max = here.id; val min = Math.max(max-31, 0);
+				val r = new Random(random.nextLong()+here.id);
+				finish for(k in min..max){
+					val solverSeed = r.nextLong();
+					at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
+				}
+			}
 			
 			
 			Logger.debug(()=>" Main: End solve function  in all places ");
 			
 			// Detect if there is no winner
-			solvers().verifyWinner(solvers);
+			//solvers().verifyWinner(solvers);
 			
 			extTime += System.nanoTime();
 			val extt = extTime;
@@ -191,11 +203,13 @@ public class Main {
 			}
 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			
-			
+			var clearTime:Long = -System.nanoTime();
 			finish for (p in Place.places()) at (p) async{	
 				solvers().clear();
 			}
-
+			val cltime=clearTime += System.nanoTime();
+			totalClearTimes += clearTime;
+			Logger.info(()=>{" cleartime="+cltime/1e9});
 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			
 			
@@ -213,10 +227,10 @@ public class Main {
 			Console.OUT.printf("\n");
 		}
 		
-		val avgcr =totalCrTimes/testNo as Double; //val avgins=totalInTimes/testNo as Double; 
+		val avgcr =totalCrTimes/testNo as Double; val avgclear=totalClearTimes/testNo as Double; 
 		val avgext=totalExTimes/testNo as Double;
-		//Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG install Time= "+(avgins/1e9)+" AVG external solving Time= "+(avgext/1e9)});
-		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)});
+		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9)});
+		//Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)});
 		
 		
 		return;

@@ -65,15 +65,24 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	//commOption = commOpt;
     	nbExplorerPT = npT; // will be a parameter 
     	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
+    	
+    	
+    	
     }
     //var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
     
     
     
-    
-    // public def install(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long ):void{
-    // 	
-    // }
+    public def installSolver(st:PlaceLocalHandle[ParallelSolverI(sz)]):void{
+   
+    	Logger.debug(()=>{"Installing solver"});
+ 
+    	val ss = st() as ParallelSolverI(sz);
+    	val size = sz as Int;
+    	var nsize:Int = size;
+    	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss);
+    	commM = new CommManager(sz, 0n , st, updateI,0n, poolSize, nTeams, seed );
+    }
     	
     
     /** 
@@ -85,43 +94,30 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
      * 	@param cspProblem code with the problem to be solved (1 for Magic Square Problems, other number for Queens Problem)
      * 	@return cost of the solution
      */
-    public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long):void { 
-    	
-    	
+    public def solve(st:PlaceLocalHandle[ParallelSolverI(sz)], cspGen:()=>SMTIModel(sz), seed_ :Long ):void { 
     	val solvers = st;
     	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
-    	val size = sz as Int;
-    	var nsize:Int = size;
     	
     	this.seed = seed_;
     	val random = new Random(seed);
     	var cost:Int = x10.lang.Int.MAX_VALUE;
     	
-    	//Logger.debug(()=>{"   Seed in solver:"+seed});
-    	val ss = st() as ParallelSolverI(sz);
+    	
+    	solver.setSeed(seed); 
+    	//commanager set seed
+    	
+    	//Logger.info(()=>{"   Seed in solver:"+seed});
+    	
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem
-    	solver = new ASSolverPermut(sz, nsize, seed, ss);
-    	//conf = new ASSolverConf(sz, 1n /*ASSolverConf.USE_PLACES*/, solvers, updateI,0n, commOption, poolSize, nTeams );
-    	commM = new CommManager(sz, 0n , solvers, updateI,0n, poolSize, nTeams, seed );
-    	
-    	//solver = new ASSolverPermut(sz, nsize, seed, ss);
-    	
-    	//Do I need to get more elegant way to obtain different seeds here? 
-    	//I'm currently using the solver id (place id) as seed
-    	
-    	//Team.WORLD.barrier();
-    	
-    	/***/
-    	//taking the time only to solve the problem, not included the time to signal the others explorers
-    	
+    	    	
     	Logger.debug(()=>"  PlacesMultiWalks: Start solve process: solver.solve() function ");
     	
     	time = -System.nanoTime();
     	cost = solver.solve(csp_);
     	time += System.nanoTime();
     	
-    	
+    	// Logger.debug(()=>"  PlacesMultiWalks: end solve process: solver.solve() function ");
     	if (cost == 0n){ //TODO: Define a new condition (It's possible to finish without cost=0)
     		// A solution has been found! Huzzah! 
     		// Light the candles! Kill the blighters!
@@ -162,13 +158,14 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	}
     val winnerLatch = new AtomicBoolean(false);
     public def announceWinner(ss:PlaceLocalHandle[ParallelSolverI(sz)], p:Long):Boolean {
+    	//Logger.debug(()=> "  PlacesMultiWalks: announceWinner " );
     	val result = winnerLatch.compareAndSet(false, true);
     	
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner result=" + result + " for " + p + " this=" + this );
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
-    				at(k) ss().kill(); //at(k) async ss().kill();  // Testing the use of this async v1
+    				at(k) async ss().kill(); //at(k)  ss().kill();  // Testing the use of this async v1
     	}
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
     	
@@ -217,6 +214,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		commM.restartPool();
 		stats.clear();
 		bestC.clear();
+		solver.clear();
     }
     public def accStats(c:CSPStats):void {
 		accStats.accStats(c);
