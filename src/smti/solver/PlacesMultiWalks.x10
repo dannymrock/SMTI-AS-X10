@@ -165,7 +165,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
-    				at(k) async ss().kill(); //at(k)  ss().kill();  // Testing the use of this async v1
+    				at(k)  ss().kill(); //at(k) async ss().kill();   // Testing the use of this async v1
     	}
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
     	
