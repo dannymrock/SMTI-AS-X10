@@ -1,18 +1,24 @@
 package smti.solver;
 import smti.util.*;
+import x10.util.Random;
 /**
  * Maintain a poolSize set of best partial solutions. These
  * can be queried by other places.
  * 
  */
 
-public class ElitePool(sz:Long, poolSize:Int, seed:Long) {
+public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	var nbEntries : Int = 0n;
 	val bestPartialSolutions = new Rail(poolSize, CSPSharedUnit(sz,0n as Int,null,0n as Int)); // dummy value
 	var bestCost : Int = Int.MAX_VALUE;
 	var worstCost : Int = Int.MAX_VALUE;
-	val random = new RandomTools(seed);
+	var random:Random;
 	val monitor = new Monitor("ElitePool");
+	
+	
+	public def setSeed(seed:Long){
+		random=new Random(seed);
+	}
 	
 	public def isGoodCost(cost : Int) : Boolean {
 		if (nbEntries == 0n) return true;
@@ -57,7 +63,7 @@ public class ElitePool(sz:Long, poolSize:Int, seed:Long) {
 			
 			for (i in 0n..(nbEntries-1n)){
 				if (worstCost == bestPartialSolutions(i).cost){
-					if (random.randomInt(++nvic) == 0n)
+					if (random.nextInt(++nvic) == 0n)
 						victim = i;
 				}
 				
@@ -109,7 +115,7 @@ public class ElitePool(sz:Long, poolSize:Int, seed:Long) {
 		monitor.atomicBlock(()=> {
 			//if (here.id==0)Console.OUT.println(here+"aqui");
 			if (nbEntries < 1n) return null;
-			val index = random.randomInt(nbEntries);
+			val index = random.nextInt(nbEntries);
 			if (index >= nbEntries) Console.OUT.println("Golden: index is " + index + " needed to be < " + nbEntries);
 			//if (here.id==0)Console.OUT.println(here+"alli");
 			return new Maybe(bestPartialSolutions(index));

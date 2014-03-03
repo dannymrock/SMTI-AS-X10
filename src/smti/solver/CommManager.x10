@@ -8,7 +8,7 @@ import smti.util.*;
  * Every place has an ASSolverPermutRW. This points to an CommManager.
  * comm is stored in ASSolverPermutRW.
  */
-public class CommManager(sz:Long, poolSize:Int, seed:Long) {
+public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	
 	
 	public static USE_PLACES  = 0n;
@@ -23,7 +23,7 @@ public class CommManager(sz:Long, poolSize:Int, seed:Long) {
 	
 	/**elite pool
 	 */
-	val ep = new ElitePool( sz, poolSize, seed); 
+	val ep = new ElitePool( sz, poolSize); 
 	
 	/** Solver use activities or places */
 	var solverMode : Int;
@@ -52,8 +52,8 @@ public class CommManager(sz:Long, poolSize:Int, seed:Long) {
 	val solvers:PlaceLocalHandle[ParallelSolverI(sz)];
 	
 	def this( sz:Long, solverModeIn : Int , ss: PlaceLocalHandle[ParallelSolverI(sz)], 
-	        intraTeamI : Int, interTeamI : Int ,  ps : Int, nT : Int, seed:Long){
-		property(sz, ps, seed);
+	        intraTeamI : Int, interTeamI : Int ,  ps : Int, nT : Int){
+		property(sz, ps);
 		solvers = ss;
 	    solverMode = solverModeIn;
 		intraTI = intraTeamI;
@@ -65,6 +65,10 @@ public class CommManager(sz:Long, poolSize:Int, seed:Long) {
 		val m = myTeamId; val s = solverMode;
 		Logger.debug(()=>{(s==0n ? ("My team is: " + m):("My team is:"+here.id))});
 		
+	}
+	
+	public def setSeed(seed:Long){
+		ep.setSeed(seed);
 	}
 	
 	public def setValues(toSet: CommManager{self.sz==this.sz}){

@@ -388,7 +388,7 @@ public class SMTIModel (sz:Long, seed:Long){
 			if( revpM(mi)(pmi)==0n ){
 				prefPM = length; //put some value
 				singles++;
-				Console.OUT.println("m="+ (mi+1n) +" w="+(pmi+1n)+" is not a valid match (single)");
+				Console.OUT.println("Error m="+ (mi+1n) +" w="+(pmi+1n)+" is not a valid match (single)");
 			} else{ // m has a valid assignment pm
 				prefPM = revpM(mi)(pmi);
 			}
@@ -410,7 +410,7 @@ public class SMTIModel (sz:Long, seed:Long){
 				
 				if (e > 0n){
 					r++;
-					Console.OUT.println("blocking pair m="+(mi+1n)+" w="+w+" pw= "+(pwi+1n) +" with error= "+e);
+					Console.OUT.println("Error: blocking pair m="+(mi+1n)+" w="+w+" pw= "+(pwi+1n) +" with error= "+e);
 					/* count the errors (number of BP) */
 					break; 			//only consider undominated BP
 				}
@@ -499,7 +499,8 @@ public class SMTIModel (sz:Long, seed:Long){
 		for (w in 0..(l-1)){
 			noFirst=0n;
 			for (p in 0..(l-1)){
-				if(mPref(w)(p)==0n) continue;
+				if(wPref(w)(p)==0n)
+                   continue;
 				if(noFirst==0n){
 					noFirst=1n;
 					continue;

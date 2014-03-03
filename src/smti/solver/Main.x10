@@ -56,12 +56,12 @@ public class Main {
 		
 		if (outFormat == 0n){
 			Console.OUT.println("Parameters\tP1="+p1+"\tP2="+p2+"\tsize="+size+"\tsamples="+testNo
-					+"\tmode="+(solverMode==0n ?"onlyPlaces":"hybrid")+"\tcomm="+comm+"\tintra-Team="
+					+"\tmode="+(solverMode==0n ?"seq":"parallel")+"\tcomm="+comm+"\tintra-Team="
 					+intraTI+"\tinter-Team="+interTI+"\tminDistance="+minDistance+"\tpoolsize="+poolSize
 					+"\tplaces="+Place.MAX_PLACES+"\tnpT="+nodesPTeam);
 		}else{
 			Console.OUT.println("Prob P1 deletions: "+p1+"\n Prob P2 - ties:"+p2+"\n Size: "+size+"\nNumber of repetitions: "+testNo+
-							"\nSolverMode: "+(solverMode==0n ?"Only Places":"Hybrid (Places and Activities)")+
+							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
 							"\nCommunication strategy: "+comm+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
 							"\nPool Size: "+poolSize);
@@ -162,22 +162,22 @@ public class Main {
 			// 	solvers().solve(solvers, cspGen, random.nextLong());
 			// });
 
-			// finish for (p in Place.places()) {
-			// 	val solverSeed = random.nextLong();	
-			// 	at (p) async{
-			// 		solvers().solve(solvers, cspGen, solverSeed);
-			// 	}	
-			// }
-			
-			
-			finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
-				val max = here.id; val min = Math.max(max-31, 0);
-				val r = new Random(random.nextLong()+here.id);
-				finish for(k in min..max){
-					val solverSeed = r.nextLong();
-					at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
+			if (solverMode == 0n)
+				finish for (p in Place.places()) {
+					val solverSeed = random.nextLong();	
+					at (p) async{
+						solvers().solve(solvers, cspGen, solverSeed);
+					}	
 				}
-			}
+			else
+				finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
+					val max = here.id; val min = Math.max(max-31, 0);
+					val r = new Random(random.nextLong()+here.id);
+					finish for(k in min..max){
+						val solverSeed = r.nextLong();
+						at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
+					}
+				}
 			
 			
 			Logger.debug(()=>" Main: End solve function  in all places ");

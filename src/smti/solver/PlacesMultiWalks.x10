@@ -81,7 +81,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val size = sz as Int;
     	var nsize:Int = size;
     	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss);
-    	commM = new CommManager(sz, 0n , st, updateI,0n, poolSize, nTeams, seed );
+    	commM = new CommManager(sz, 0n , st, updateI,0n, poolSize, nTeams );
     }
     	
     
@@ -99,12 +99,14 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
     	
     	this.seed = seed_;
-    	val random = new Random(seed);
+    	//val random = new Random(seed);
+    	val random = new Random(here.id);
+    	
     	var cost:Int = x10.lang.Int.MAX_VALUE;
     	
     	
-    	solver.setSeed(seed); 
-    	//commanager set seed
+    	solver.setSeed(random.nextLong()); 
+    	commM.setSeed(random.nextLong());
     	
     	//Logger.info(()=>{"   Seed in solver:"+seed});
     	
@@ -131,9 +133,9 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		if (winner) {
     			setStats_(solvers);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-    			csp_.displaySolution2(solver.bestConf as Valuation(sz));
+    			//csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
-    			
+    			csp_.verified(solver.bestConf as Valuation(sz));
     		}
     	}
     }
@@ -165,7 +167,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	if (result) {
     		for (k in Place.places()) 
     			if (p != k.id) 
-    				at(k) async ss().kill(); //at(k)  ss().kill(); //   // Testing the use of this async v1
+    				at(k)  ss().kill(); // at(k) async ss().kill();  // Testing the use of this async v1
     	}
     	Logger.debug(()=> "  PlacesMultiWalks: announceWinner all kill messages are sent" );
     	
