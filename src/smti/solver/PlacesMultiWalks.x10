@@ -108,7 +108,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	solver.setSeed(random.nextLong()); 
     	commM.setSeed(random.nextLong());
     	
-    	Logger.info(()=>{"   Seed in solver:"+seed});
+    	//Logger.info(()=>{"   Seed in solver:"+seed});
     	
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem

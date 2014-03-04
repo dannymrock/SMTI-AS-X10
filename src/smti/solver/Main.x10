@@ -107,7 +107,7 @@ public class Main {
 		
 		// accumulated times
 		var totalExTimes :Long = 0;
-		var totalCrTimes :Long = 0;
+		var totalLdTimes :Long = 0;
 		var totalClearTimes :Long = 0;
 		
 		// seed
@@ -140,7 +140,7 @@ public class Main {
  				readMatrix(fr, sizeF,  mPref, wPref);
  				fr.close();
  				val cT= loadTime += System.nanoTime();
- 				totalCrTimes += loadTime;
+ 				totalLdTimes += loadTime;
  				Logger.info(()=>{"Time to load the problem="+cT/1e9});
  				
  				var extTime:Long = -System.nanoTime();
@@ -212,7 +212,7 @@ public class Main {
 			readMatrix(fr, sizeF,  mPref, wPref);
 			fr.close();
 			val cT= loadTime += System.nanoTime();
-			totalCrTimes += loadTime;
+			totalLdTimes += loadTime;
 			Logger.info(()=>{"Time to load the problem="+cT/1e9});
 			
 			for (j = 1n; j <= testNo ; j++ ){
@@ -266,7 +266,7 @@ public class Main {
 				Logger.info(()=>{" cleartime="+cltime/1e9});
 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			}
-			j--;	
+			j--; //j-1 = total number samples
 		}
 		
 		
@@ -281,9 +281,9 @@ public class Main {
 			//accStats.printAVG(testNo);
 			Console.OUT.printf("\n");
 		}
-		val avgcr =totalCrTimes/testNo as Double; val avgclear=totalClearTimes/testNo as Double; 
-		val avgext=totalExTimes/testNo as Double;
-		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9)});
+		val avgld =totalLdTimes/j as Double; val avgclear=totalClearTimes/j as Double; 
+		val avgext=totalExTimes/j as Double;
+		Logger.info(()=>{"AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9)});
 		
 // 		var totalExTimes :Long = 0;
 // 		var totalCrTimes :Long = 0;
