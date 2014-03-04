@@ -1,6 +1,9 @@
 package smti.solver;
 import smti.util.*;
 import x10.array.Array_2;
+import x10.io.File;
+import x10.io.FileReader;
+import x10.io.FileWriter;
 
 public class SMTIModel (sz:Long, seed:Long){
 	/** length:size of the problem  **/
@@ -628,6 +631,14 @@ public class SMTIModel (sz:Long, seed:Long){
 			Console.OUT.println("");
 		}
 	}
+
+static def loadPrefs(fileName:String, mP:Rail[Rail[Int]], wP:Rail[Rail[Int]]){
+ 	val input = new File(fileName);
+ 
+
+}
+
+
 }
 
 public type SMTIModel(s:Long)=SMTIModel{self.sz==s};

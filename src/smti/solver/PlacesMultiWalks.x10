@@ -99,8 +99,8 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	assert solvers() == this : "Whoa, basic plumbing problem -- I am not part of solvers!";
     	
     	this.seed = seed_;
-    	//val random = new Random(seed);
-    	val random = new Random(here.id);
+    	val random = new Random(seed);
+    	//val random = new Random(here.id);
     	
     	var cost:Int = x10.lang.Int.MAX_VALUE;
     	
@@ -108,7 +108,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	solver.setSeed(random.nextLong()); 
     	commM.setSeed(random.nextLong());
     	
-    	//Logger.info(()=>{"   Seed in solver:"+seed});
+    	Logger.info(()=>{"   Seed in solver:"+seed});
     	
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem
