@@ -115,8 +115,8 @@ public class CSPStats{
 		val sameIter : Double = same /iters;
 		//val changeF : Double = (change as Double)/count;
 		if (oF == 0n){
-			Console.OUT.println(count+"\t"+time+"\t"+iters+"\t"+team+"\t"+explorer+"\t"+locmin+"\t"+swaps
-					+"\t"+reset+"\t"+sameIter+"\t"+restart+"\t"+bp+"\t"+singles+"\t"+change+"\t"+forceRestart+"\t"+((bp == 0n && singles == 0n)?1n:0n));
+			Console.OUT.println(count+","+time+","+iters+","+team+/*","+explorer+*/","+locmin+","+swaps
+					+","+reset+","+sameIter+","+restart+","+bp+","+singles+","+change+","+forceRestart+","+((bp == 0n && singles == 0n)?1n:0n));
 		}else{
 			Console.OUT.printf("|  %3d  | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
 			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3d | %3d |",swaps,reset,sameIter,restart, bp, singles);
@@ -133,9 +133,9 @@ public class CSPStats{
 		val sameIter : Double = (same as Double)/iters;
 		val changeF : Double = (change as Double)/no;
 		if (oF == 0n){
-			Console.OUT.print("AVG\t"+time/no+"\t"+iters/no+"\t"+locmin/no+"\t"+swaps/no+"\t"+reset/no
-					+"\t"+sameIter+"\t"+restart/no+"\t"+bp/(no as float)+"\t"+singles/(no as Double)
-					+"\t"+changeF+"\t"+forceRestart/no+"\t"+accPM);
+			Console.OUT.print("AVG,"+time/no+","+iters/no+",,"+locmin/no+","+swaps/no+","+reset/no
+					+","+sameIter+","+restart/no+","+bp/(no as float)+","+singles/(no as Double)
+					+","+changeF+","+forceRestart/no+","+accPM+"\n");
 		}else{
 			Console.OUT.printf("|avg-%3d| %8.4f | %8d |  N/A  | %8d |", no, time/no, iters/no, locmin/no);
 			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,

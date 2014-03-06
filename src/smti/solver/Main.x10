@@ -23,7 +23,7 @@ public class Main {
 	
 	var fp  : File;
 	public static def main(args:Rail[String]):void{
-	
+		var totalTime:Long = -System.nanoTime();
 		//val r = new Random();
 		val opts = new OptionsParser(args, new Rail[Option](0L), [
 		    Option("d", "", "probability p1 - Deletions"),
@@ -62,10 +62,10 @@ public class Main {
 		//at(Main.param) Main.param().poolSize = poolSize;
 		
 		if (outFormat == 0n){
-			Console.OUT.println("Parameters\tP1="+p1+"\tP2="+p2+"\tsize="+size+"\tsamples="+testNo
-					+"\tmode="+(solverMode==0n ?"seq":"parallel")+"\tcomm="+comm+"\tintra-Team="
-					+intraTI+"\tinter-Team="+interTI+"\tminDistance="+minDistance+"\tpoolsize="+poolSize
-					+"\tplaces="+Place.MAX_PLACES+"\tnpT="+nodesPTeam);
+			Console.OUT.println("Path,size,samples,mode,comm,intra-Team,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
+			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+comm+","+
+					intraTI+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
+					+","+inSeed+"\n");
 		}else{
 			Console.OUT.println("Prob P1 deletions: "+p1+"\nProb P2 - ties:"+p2+"\nSize: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
@@ -91,7 +91,7 @@ public class Main {
 				()=>new PlacesMultiWalks(vectorSz, intraTI, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
-			Console.OUT.println("seed\tcount\ttime(s)\titers\tplace\tlocMin\tswaps\tresets\tsa/it\treSta\tbp\tsingles\tChanges\tfr\tps\tsolution");
+			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,re-starts,blocking_pairs,singles,Changes,force_re-start,solution");
 		}else{
 			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
@@ -134,10 +134,11 @@ public class Main {
 		val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
 		
 		for (file in execList){
-			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
-			Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
-			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
-			
+			if(outFormat != 0n){
+				Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+				Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
+				Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+			}
 			var loadTime:Long = -System.nanoTime();
 			//Load first line wtith headers size p1 p2
 			val filep = new File(file);//new File(path+"/"+file);
@@ -187,7 +188,7 @@ public class Main {
 				Logger.info(()=>{"ext Time="+extt/1e9});
 				
 				if(outFormat == 0n){
-					Console.OUT.print(seed+"\t");
+					Console.OUT.print(file+",");
 					solvers().printStats(j,outFormat);
 				}else{
 					Console.OUT.printf("\r");
@@ -207,6 +208,7 @@ public class Main {
 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			}
 			if(outFormat == 0n){
+				Console.OUT.print(file+",");
 				solvers().printAVG(testNo,outFormat);
 			}else{
 				Console.OUT.printf("\r");
@@ -221,12 +223,13 @@ public class Main {
 			solvers().clearSample();
 		}	
 		//Print general avg
-		Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
-		Console.OUT.println("\n   General Statistics for "+samplesNb+" problems, each one solved "+testNo+" times ");
+		
 		if(outFormat == 0n){
-			solvers().printAVG(samplesNb*testNo,outFormat);
+			Console.OUT.print("TOTAL,");
+			solvers().printGenAVG(samplesNb*testNo,outFormat);
 		}else{
-			Console.OUT.printf("\r");
+			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+			Console.OUT.println("\n   General Statistics for "+samplesNb+" problems, each one solved "+testNo+" times ");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
@@ -238,7 +241,12 @@ public class Main {
 		val avgld = totalLdTimes/(samplesNb as Double); 
 		val avgclear = totalClearTimes/(samplesNb*testNo as Double); 
 		val avgext=totalExTimes/(samplesNb*testNo as Double);
-		Console.OUT.println("AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9));
+		totalTime += System.nanoTime();
+		if(outFormat == 0n){
+			Console.OUT.println("Total_Files,Repetition_per_File,Total_Time,AVG_Loading_Time,AVG_external_solving_Time,AVG_clear_Time");
+			Console.OUT.println(samplesNb+","+testNo+","+(totalTime/1e9)+","+(avgld/1e9)+","+(avgext/1e9)+","+(avgclear/1e9));
+		}else
+			Console.OUT.println("AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9));
 		
 		return;
 	}
