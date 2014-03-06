@@ -86,6 +86,8 @@ public interface ParallelSolverI {
     	
  	def installSolver(st:PlaceLocalHandle[ParallelSolverI(sz)] ):void;
 
+ 	def printGenAVG(count:Int, oF:Int):void ;
+ 	def clearSample():void;
 
 }
 public type ParallelSolverI(s:Long)=ParallelSolverI{self.sz==s};

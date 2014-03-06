@@ -45,7 +45,8 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	
     var bcost : Int;
     val stats = new CSPStats();
-    val accStats = new CSPStats();
+    val sampleAccStats = new CSPStats();
+    val genAccStats = new CSPStats();
     /** Comunication Variables*/
     var commM : CommManager(sz);
     //Hybrid approach
@@ -204,8 +205,14 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	    stats.print(count,oF);
 	}
 	public def printAVG(count:Int, oF:Int):void {
-	    accStats.printAVG(count,oF);
+	    sampleAccStats.printAVG(count,oF);
 	}
+	
+	
+	public def printGenAVG(count:Int, oF:Int):void {
+		genAccStats.printAVG(count,oF);
+	}
+	
 	public def tryInsertVector(cost:Int, variables:Rail[Int]{self.size==sz}, place:Int) {
 		commM.ep.tryInsertVector(cost, variables, place);
 	}
@@ -218,8 +225,13 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		bestC.clear();
 		solver.clear();
     }
+    
+    public def clearSample(){
+    	sampleAccStats.clear();
+    }
     public def accStats(c:CSPStats):void {
-		accStats.accStats(c);
+		genAccStats.accStats(c);
+		sampleAccStats.accStats(c);
     }
 	
 	public def getCurrentData():Maybe[CSPSharedUnit(sz)]{

@@ -375,10 +375,16 @@ public class SMTIModel (sz:Long, seed:Long){
 		var r:Int = 0n;
 		var singles:Int = 0n;
 		
+		val permutV = new Rail[Int](sz, 0n);
 		variablesW.clear();
 		for (mi in match.range()){
-			if (match(mi)==0n)	continue;
-			variablesW(match(mi)-1) = mi as Int + 1n;
+			val value = match(mi);
+			permutV(value-1)++;
+			if (permutV(value-1)>1){
+				Console.OUT.println("Not valid permutation, value "+ value +" is repeted");
+			}
+			if (value==0n)	continue;
+			variablesW(value-1) = mi as Int + 1n;
 		}
 		
 		// verify existence of undomminated BP's for each man 

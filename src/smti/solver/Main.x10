@@ -67,7 +67,7 @@ public class Main {
 					+intraTI+"\tinter-Team="+interTI+"\tminDistance="+minDistance+"\tpoolsize="+poolSize
 					+"\tplaces="+Place.MAX_PLACES+"\tnpT="+nodesPTeam);
 		}else{
-			Console.OUT.println("Prob P1 deletions: "+p1+"\n Prob P2 - ties:"+p2+"\n Size: "+size+"\nNumber of repetitions: "+testNo+
+			Console.OUT.println("Prob P1 deletions: "+p1+"\nProb P2 - ties:"+p2+"\nSize: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
 							"\nCommunication strategy: "+comm+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
@@ -116,118 +116,61 @@ public class Main {
 		
 		var j:Int = 0n; //counter of samples
 		
+		
+		// Select files to solve
 		Logger.info(()=>{"path:"+path});
 		val fp = new File(path);
+		val execList : Rail[String];
 		if (fp.isDirectory()){
 			Logger.info(()=>{"solving all problems into this directory"});
-			
-			for(file in fp.list()){
-				Logger.info(()=>{"file: "+file});
-				if (file(file.length()-1n)=='.') continue;
-				
-				j++;
-				//Load the problem 
- 				var loadTime:Long = -System.nanoTime();
- 				val filep = new File(file); //new File(path+"/"+file);
- 				val fr = filep.openRead();
- 				val fLine = fr.readLine(); //get first line
- 				val header = parseFirstLine(fLine);
- 				val sizeF = header(0); val p1F = header(1); val p2F = header(2);
- 				Logger.info(()=>{"file: "+file+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
- 				
- 				val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
- 				val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
- 				readMatrix(fr, sizeF,  mPref, wPref);
- 				fr.close();
- 				val cT= loadTime += System.nanoTime();
- 				totalLdTimes += loadTime;
- 				Logger.info(()=>{"Time to load the problem="+cT/1e9});
- 				
- 				var extTime:Long = -System.nanoTime();
- 				
- 				val cspGen : ()=>SMTIModel(vectorSz);
- 				val modelSeed = random.nextLong();
- 				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref) as SMTIModel(vectorSz);
- 				
- 				if (solverMode == 0n)
- 					finish for (p in Place.places()) {
- 						val solverSeed = random.nextLong();	
- 						at (p) async{
- 							solvers().solve(solvers, cspGen, solverSeed);
- 						}	
- 					}
- 				else
- 					finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
- 						val max = here.id; val min = Math.max(max-31, 0);
- 						val r = new Random(random.nextLong()+here.id);
- 						finish for(k in min..max){
- 							val solverSeed = r.nextLong();
- 							at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
- 						}
- 					}
- 				
- 				
- 				Logger.debug(()=>" Main: End solve function  in all places ");
- 				extTime += System.nanoTime();
- 				val extt = extTime;
- 				totalExTimes += extTime;
- 				Logger.info(()=>{"ext Time="+extt/1e9});
- 				
- 				
- 				//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
- 				if(outFormat == 0n){
- 					Console.OUT.print(seed+"\t");
- 					solvers().printStats(j,outFormat);
- 				}else{
- 					Console.OUT.printf("\r");
- 					solvers().printStats(j,outFormat);
- 					solvers().printAVG(j,outFormat);
- 					Console.OUT.flush();
- 				}
- 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
- 				
- 				var clearTime:Long = -System.nanoTime();
- 				finish for (p in Place.places()) at (p) async{	
- 					solvers().clear();
- 				}
- 				val cltime=clearTime += System.nanoTime();
- 				totalClearTimes += clearTime;
- 				Logger.info(()=>{" cleartime="+cltime/1e9});
- 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
-			}
+			execList = fp.list();	
 		}else{
-			Console.OUT.println("Solving "+testNo+" times the problem "+path);
-			//LoadProblem
-			//Load the problem 
+			Logger.info(()=>{"Solving "+testNo+" times the problem "+path});
+			execList = [path as String];
+		}
+		
+		var samplesNb:Int = 0n;
+		val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
+		val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
+		
+		for (file in execList){
+			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+			Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
+			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+			
 			var loadTime:Long = -System.nanoTime();
-			val filep = new File(path); //new File(path+"/"+file);
+			//Load first line wtith headers size p1 p2
+			val filep = new File(file);//new File(path+"/"+file);
+			if (filep.isDirectory()) continue;
 			val fr = filep.openRead();
 			val fLine = fr.readLine(); //get first line
 			val header = parseFirstLine(fLine);
 			val sizeF = header(0); val p1F = header(1); val p2F = header(2);
-			Logger.info(()=>{"file: "+path+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
-			
-			val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
-			val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
+			Logger.info(()=>{"file: "+file+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
+			 		
+			//Load Problem
+			//val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
+			//val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
 			readMatrix(fr, sizeF,  mPref, wPref);
 			fr.close();
 			val cT= loadTime += System.nanoTime();
 			totalLdTimes += loadTime;
 			Logger.info(()=>{"Time to load the problem="+cT/1e9});
-			
-			for (j = 1n; j <= testNo ; j++ ){
+			samplesNb++;
+			//solve the problem "testNo" times
+			for (j=1n ; j<=testNo; j++){
 				var extTime:Long = -System.nanoTime();
-                val cspGen : ()=>SMTIModel(vectorSz);
-                val modelSeed = random.nextLong();
+				val cspGen : ()=>SMTIModel(vectorSz);
+				val modelSeed = random.nextLong();
 				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref) as SMTIModel(vectorSz);
-				if (solverMode == 0n)
+				if (solverMode == 0n){
 					finish for (p in Place.places()) {
 						val solverSeed = random.nextLong();	
 						at (p) async{
 							solvers().solve(solvers, cspGen, solverSeed);
 						}	
 					}
-				else
+				}else{
 					finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
 						val max = here.id; val min = Math.max(max-31, 0);
 						val r = new Random(random.nextLong()+here.id);
@@ -236,16 +179,13 @@ public class Main {
 							at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
 						}
 					}
-				
-				
+				}
 				Logger.debug(()=>" Main: End solve function  in all places ");
 				extTime += System.nanoTime();
 				val extt = extTime;
 				totalExTimes += extTime;
 				Logger.info(()=>{"ext Time="+extt/1e9});
 				
-				
-				//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
 				if(outFormat == 0n){
 					Console.OUT.print(seed+"\t");
 					solvers().printStats(j,outFormat);
@@ -266,136 +206,39 @@ public class Main {
 				Logger.info(()=>{" cleartime="+cltime/1e9});
 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
 			}
-			j--; //j-1 = total number samples
-		}
-		
-		
+			if(outFormat == 0n){
+				solvers().printAVG(testNo,outFormat);
+			}else{
+				Console.OUT.printf("\r");
+				Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+				Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
+				Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+				solvers().printAVG(testNo,outFormat);
+				//accStats.printAVG(testNo);
+				Console.OUT.printf("\n");
+			}
+			// Clear sample accumulator
+			solvers().clearSample();
+		}	
+		//Print general avg
+		Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+		Console.OUT.println("\n   General Statistics for "+samplesNb+" problems, each one solved "+testNo+" times ");
 		if(outFormat == 0n){
-			solvers().printAVG(testNo,outFormat);
+			solvers().printAVG(samplesNb*testNo,outFormat);
 		}else{
 			Console.OUT.printf("\r");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
-			solvers().printAVG(j,outFormat);
+			solvers().printGenAVG(samplesNb*testNo,outFormat);
 			//accStats.printAVG(testNo);
 			Console.OUT.printf("\n");
 		}
-		val avgld =totalLdTimes/j as Double; val avgclear=totalClearTimes/j as Double; 
-		val avgext=totalExTimes/j as Double;
-		Logger.info(()=>{"AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9)});
 		
-// 		var totalExTimes :Long = 0;
-// 		var totalCrTimes :Long = 0;
-// 		var totalClearTimes :Long = 0;
-// 		
-// 		for (var j : Int = 1n; j <= testNo ; j++ ){
-// 			
-// 			//Solve the problem
-// 			
-// 			val seed = (inSeed == 0) ? j as Long:inSeed;
-// 			val random = new Random(seed);
-// 			// val seed = (inSeed == 0) ? random.nextLong():inSeed;
-// 			
-// 			
-// 			Logger.info(()=>{"Problem seed: "+seed});
-// 			
-// 			val cspGen : ()=>SMTIModel(vectorSz);
-// 			
-// 			// Passing mPref and wPref by reference
-// 			//Creating SMTI preferences
-// 			var creationTime:Long = -System.nanoTime();
-// 			SMTIModel.createPrefs(p1, p2, size, random.nextLong(), mPref, wPref);
-// 			val cT= creationTime += System.nanoTime();
-// 			totalCrTimes += creationTime;
-// 			
-// 			
-// 			Logger.info(()=>{"Time to create the problem="+cT/1e9});
-// 			
-// 			var extTime:Long = -System.nanoTime();
-// 			
-// 			cspGen=():SMTIModel(vectorSz)=> new SMTIModel(size as Long, seed, mPref, wPref) 
-// 													as SMTIModel(vectorSz);
-// 			
-// 			
-// 			//val solverSeed = new Rail[Long](Place.MAX_PLACES);
-// 			//for (p in solverSeed) solverSeed(p) = random.nextLong();
-// 			
-// 			
-// 			// PlaceGroup.WORLD.broadcastFlat(()=>{
-// 			// 	solvers().solve(solvers, cspGen, random.nextLong());
-// 			// });
-// 
-// 			if (solverMode == 0n)
-// 				finish for (p in Place.places()) {
-// 					val solverSeed = random.nextLong();	
-// 					at (p) async{
-// 						solvers().solve(solvers, cspGen, solverSeed);
-// 					}	
-// 				}
-// 			else
-// 				finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
-// 					val max = here.id; val min = Math.max(max-31, 0);
-// 					val r = new Random(random.nextLong()+here.id);
-// 					finish for(k in min..max){
-// 						val solverSeed = r.nextLong();
-// 						at(Place(k)) async	solvers().solve(solvers, cspGen, solverSeed);
-// 					}
-// 				}
-// 			
-// 			
-// 			Logger.debug(()=>" Main: End solve function  in all places ");
-// 			
-// 			// Detect if there is no winner
-// 			//solvers().verifyWinner(solvers);
-// 			
-// 			extTime += System.nanoTime();
-// 			val extt = extTime;
-// 			totalExTimes += extTime;
-// 			Logger.info(()=>{"ext Time="+extt/1e9});
-// 			
-// 			
-// 			//Logger.debug(()=>" End broadcastFlat: solvers().solve function");
-// 			if(outFormat == 0n){
-// 				Console.OUT.print(seed+"\t");
-// 				solvers().printStats(j,outFormat);
-// 			}else{
-// 				Console.OUT.printf("\r");
-// 				solvers().printStats(j,outFormat);
-// 				solvers().printAVG(j,outFormat);
-// 				Console.OUT.flush();
-// 			}
-// 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
-// 			
-// 			var clearTime:Long = -System.nanoTime();
-// 			finish for (p in Place.places()) at (p) async{	
-// 				solvers().clear();
-// 			}
-// 			val cltime=clearTime += System.nanoTime();
-// 			totalClearTimes += clearTime;
-// 			Logger.info(()=>{" cleartime="+cltime/1e9});
-// 			Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
-// 			
-// 			
-// 			
-// 		}
-// 		if(outFormat == 0n){
-// 			solvers().printAVG(testNo,outFormat);
-// 		}else{
-// 			Console.OUT.printf("\r");
-// 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
-// 			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
-// 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
-// 			solvers().printAVG(testNo,outFormat);
-// 			//accStats.printAVG(testNo);
-// 			Console.OUT.printf("\n");
-// 		}
-// 		
-// 		val avgcr =totalCrTimes/testNo as Double; val avgclear=totalClearTimes/testNo as Double; 
-// 		val avgext=totalExTimes/testNo as Double;
-// 		Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9)});
-// 		//Logger.info(()=>{"AVG Creation Time= "+(avgcr/1e9)+" AVG external solving Time= "+(avgext/1e9)});
-// 		
+		val avgld = totalLdTimes/(samplesNb as Double); 
+		val avgclear = totalClearTimes/(samplesNb*testNo as Double); 
+		val avgext=totalExTimes/(samplesNb*testNo as Double);
+		Console.OUT.println("AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9));
 		
 		return;
 	}

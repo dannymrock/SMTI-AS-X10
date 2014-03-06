@@ -320,7 +320,7 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 		//creating an error
 		//csp_.swapVariables(1n,150n);
 		//csp_.swapVariables(1n,2n);
-		//csp_.variables(1)=2n;
+		//bestConf(2)=2n;
 		
 		return bestCost;
 	}

@@ -141,7 +141,7 @@ public class CSPStats{
 			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
 				bp/(no as float), singles/(no as Double));
 			Console.OUT.printf("%4.1f | %3d |", changeF, forceRestart/no);
-			Console.OUT.printf(" %3d |\n",accPM);
+			Console.OUT.printf(" %3d |",accPM);
 		}
 	}
 	
