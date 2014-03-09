@@ -26,7 +26,7 @@ public class Main {
 		var totalTime:Long = -System.nanoTime();
 		//val r = new Random();
 		val opts = new OptionsParser(args, new Rail[Option](0L), [
-		    Option("d", "", "probability p1 - Deletions"),
+		    Option("l", "", "restart Limit"),
 		    Option("s", "", "Size of the problem"),
 		    Option("b", "", "Number of benchmark tests"),
 		    Option("m", "", "Solver mode distribution 0 for Places \"n\" for Activities (n number of activities). Default 0."),
@@ -42,7 +42,7 @@ public class Main {
 		    Option("o", "", "output format: machine 0, info 1")
 		    ]);
 		
-		val p1			= opts("-d", 50n);
+		val restLimit	= opts("-l", 1000000000n);
 		val size		= opts("-s", 10n);
 		val testNo		= opts("-b", 10n);
 		val solverMode	= opts("-m", 0n);
@@ -67,7 +67,7 @@ public class Main {
 					intraTI+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
 					+","+inSeed+"\n");
 		}else{
-			Console.OUT.println("Prob P1 deletions: "+p1+"\nProb P2 - ties:"+p2+"\nSize: "+size+"\nNumber of repetitions: "+testNo+
+			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
 							"\nCommunication strategy: "+comm+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
@@ -91,7 +91,7 @@ public class Main {
 				()=>new PlacesMultiWalks(vectorSz, intraTI, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
-			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,re-starts,blocking_pairs,singles,Changes,force_re-start,solution");
+			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution");
 		}else{
 			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
 			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
@@ -130,8 +130,8 @@ public class Main {
 		}
 		
 		var samplesNb:Int = 0n;
-		val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
-		val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
+		// val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
+		// val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
 		
 		for (file in execList){
 			if(outFormat != 0n){
@@ -150,8 +150,8 @@ public class Main {
 			Logger.info(()=>{"file: "+file+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
 			 		
 			//Load Problem
-			//val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
-			//val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
+			val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
+			val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
 			readMatrix(fr, sizeF,  mPref, wPref);
 			fr.close();
 			val cT= loadTime += System.nanoTime();
@@ -163,7 +163,7 @@ public class Main {
 				var extTime:Long = -System.nanoTime();
 				val cspGen : ()=>SMTIModel(vectorSz);
 				val modelSeed = random.nextLong();
-				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref) as SMTIModel(vectorSz);
+				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref,restLimit) as SMTIModel(vectorSz);
 				if (solverMode == 0n){
 					finish for (p in Place.places()) {
 						val solverSeed = random.nextLong();	
@@ -182,6 +182,10 @@ public class Main {
 					}
 				}
 				Logger.debug(()=>" Main: End solve function  in all places ");
+				
+				// Detect if there is no winner
+				solvers().verifyWinner(solvers);
+				
 				extTime += System.nanoTime();
 				val extt = extTime;
 				totalExTimes += extTime;
