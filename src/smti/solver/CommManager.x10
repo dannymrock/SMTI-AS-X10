@@ -44,6 +44,7 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	
 	val nbTeams : Int;
 	val myTeamId : Int;
+	
 	//val random = new x10.util.Random();
 	
 	/**
@@ -61,9 +62,11 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 		//commOption = cOption;
 		nbTeams = nT;
 		myTeamId = here.id as Int % nbTeams;
+		//headNodeId = 
 
 		val m = myTeamId; val s = solverMode;
 		Logger.debug(()=>{(s==0n ? ("My team is: " + m):("My team is:"+here.id))});
+		//Console.OUT.println(s==0n ? ("My team is: " + m):("My team is:"+here.id));
 		
 	}
 	

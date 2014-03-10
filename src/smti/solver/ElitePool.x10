@@ -12,12 +12,14 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	val bestPartialSolutions = new Rail(poolSize, CSPSharedUnit(sz,0n as Int,null,0n as Int)); // dummy value
 	var bestCost : Int = Int.MAX_VALUE;
 	var worstCost : Int = Int.MAX_VALUE;
-	var random:Random;
+	var random:Random = new Random();
 	val monitor = new Monitor("ElitePool");
 	
 	
 	public def setSeed(seed:Long){
+		//monitor.atomicBlock(()=> {
 		random=new Random(seed);
+		//});
 	}
 	
 	public def isGoodCost(cost : Int) : Boolean {

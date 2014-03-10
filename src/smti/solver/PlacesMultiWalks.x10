@@ -105,9 +105,9 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	
     	var cost:Int = x10.lang.Int.MAX_VALUE;
     	
-    	
-    	solver.setSeed(random.nextLong()); 
     	commM.setSeed(random.nextLong());
+    	solver.setSeed(random.nextLong()); 
+    	
     	
     	//Logger.info(()=>{"   Seed in solver:"+seed});
     	
