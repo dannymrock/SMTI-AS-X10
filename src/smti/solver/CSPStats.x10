@@ -21,7 +21,7 @@ public class CSPStats{
 	/** time to reach the solution */
 	var time : Double=0.0d;
 	/** Number of iterations */
-	var iters : Int=0n;
+	var iters : Long=0;
 	/** Number of local minimum */
 	var locmin : Int=0n;
 	/** Number of swaps */
@@ -29,7 +29,7 @@ public class CSPStats{
 	/** Number of resets */
 	var reset : Int=0n;
 	/** number of same variables */
-	var same : Int=0n;
+	var same : Long=0;
 	/** number of restarts */  
 	var restart : Int=0n;
 	/** Number time to change vector due to communication */ 
@@ -112,7 +112,7 @@ public class CSPStats{
 	 * 	@param count Number of this iteration
 	 */
 	public def print(count:Int, oF:Int){
-		val sameIter : Double = same /iters;
+		val sameIter : Double = same /(iters as Double);
 		//val changeF : Double = (change as Double)/count;
 		if (oF == 0n){
 			Console.OUT.println(count+","+time+","+iters+","+team+/*","+explorer+*/","+locmin+","+swaps
@@ -130,7 +130,7 @@ public class CSPStats{
 	 */
 	public def printAVG(no:Int, oF:Int){ 
 	   // val no = no1 as Double;
-		val sameIter : Double = (same as Double)/iters;
+		val sameIter : Double = same/(iters as Double);
 		val changeF : Double = (change as Double)/no;
 		if (oF == 0n){
 			Console.OUT.print("AVG,"+time/no+","+iters/no+",,"+locmin/no+","+swaps/no+","+reset/no

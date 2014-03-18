@@ -40,9 +40,10 @@ public class SMTIModel (sz:Long, seed:Long){
     var weight:Int = length;
     
     
-	public def this (lengthProblem : Long , seed : Long, mPrefs:Rail[Rail[Int]], wPrefs:Rail[Rail[Int]], restLimit:Int){
+	public def this (lengthProblem : Long , seed : Long, mPrefs:Rail[Rail[Int]], wPrefs:Rail[Rail[Int]], 
+			restLimit:Int, probCV:Int){
 		property(lengthProblem, seed);
-		this.initParameters(restLimit);
+		this.initParameters(restLimit, probCV);
 		
 		val l = length as Int;
 		menPref = mPrefs;
@@ -96,7 +97,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	/** initParameters
 	 *  It is necessary to fine tune the parameters for this problem
 	 */
-	private def initParameters(rLimit:Int){
+	private def initParameters(rLimit:Int, probCV:Int){
 		
 		solverParams.probSelectLocMin =  100n; // try ~80%  
 		solverParams.freezeLocMin = 1n;
@@ -109,10 +110,11 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
 		
-	    solverParams.probChangeVector = 10n;
+	    solverParams.probChangeVector = probCV; //10n;
 	    
 	    //weight = System.getenv().get("V")!=null?length:1n;
 	    //Console.OUT.println("restart Limit= "+solverParams.restartLimit);
+	    //Console.OUT.println("Prob Change Vector= "+solverParams.probChangeVector);
 	    
 	}
 	

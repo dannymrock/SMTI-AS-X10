@@ -31,7 +31,7 @@ public class Main {
 		    Option("b", "", "Number of benchmark tests"),
 		    Option("m", "", "Solver mode distribution 0 for Places \"n\" for Activities (n number of activities). Default 0."),
 		    Option("t", "", "probability p2 - ties."),
-		    Option("c", "", "Communication option: 0 no comm 1 for \"place 0\", 2 for all-to-all and 3 for neighbors"),
+		    Option("c", "", "Probability to change vector in Intra-Team Communication "),
 		    Option("i", "", "Intra-team Communication Interval (iterations) . Default 0 - no communication."),
 		    Option("j", "", "Inter-team Communication Interval (tim miliseconds) . Default 0 - no communication."),
 		    Option("n", "", "nodes_per_team parameter. Default 4."),
@@ -47,14 +47,14 @@ public class Main {
 		val testNo		= opts("-b", 10n);
 		val solverMode	= opts("-m", 0n);
 		val p2			= opts("-t", 50n);
-		val comm		= opts("-c", 0n);
+		val probCVec	= opts("-c", 10n);
 		val intraTI		= opts("-i", 0n);
 		val interTI		= opts("-j", 0);
 		val nodesPTeam	= opts("-n", 1n);
 		val poolSize	= opts("-k", 4n);
 		val inSeed		= opts("-y", 0);
 		val minDistance	= opts("-x", 0.3);
-		val path		= opts("-p", "");
+		var path:String	= opts("-p", "");
 		val outFormat	= opts("-o", 1n);
 		
 		var vectorSize:Long=0;
@@ -62,14 +62,14 @@ public class Main {
 		//at(Main.param) Main.param().poolSize = poolSize;
 		
 		if (outFormat == 0n){
-			Console.OUT.println("Path,size,samples,mode,comm,intra-Team,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
-			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+comm+","+
+			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
+			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+probCVec+","+
 					intraTI+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
 					+","+inSeed+"\n");
 		}else{
 			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
-							"\nCommunication strategy: "+comm+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
+							"\nProbability to Change Vector: "+probCVec+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
 							"\nPool Size: "+poolSize);
 
@@ -118,15 +118,17 @@ public class Main {
 		
 		
 		// Select files to solve
-		Logger.info(()=>{"path:"+path});
+		//Logger.info(()=>{"path:"+path});
 		val fp = new File(path);
 		val execList : Rail[String];
 		if (fp.isDirectory()){
 			Logger.info(()=>{"solving all problems into this directory"});
 			execList = fp.list();	
 		}else{
-			Logger.info(()=>{"Solving "+testNo+" times the problem "+path});
-			execList = [path as String];
+			//Logger.info(()=>{"Solving "+testNo+" times the problem "+path});
+			execList = [fp.getName()];
+			path = fp.getParentFile().getPath();
+			//Console.OUT.println(path+" "+fp.getName());
 		}
 		
 		var samplesNb:Int = 0n;
@@ -141,7 +143,7 @@ public class Main {
 			}
 			var loadTime:Long = -System.nanoTime();
 			//Load first line wtith headers size p1 p2
-			val filep = new File(file);//new File(path+"/"+file);
+			val filep = new File(path+"/"+file);//new File(file);//
 			if (filep.isDirectory()) continue;
 			val fr = filep.openRead();
 			val fLine = fr.readLine(); //get first line
@@ -163,7 +165,7 @@ public class Main {
 				var extTime:Long = -System.nanoTime();
 				val cspGen : ()=>SMTIModel(vectorSz);
 				val modelSeed = random.nextLong();
-				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref,restLimit) as SMTIModel(vectorSz);
+				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref,restLimit,probCVec) as SMTIModel(vectorSz);
 				if (solverMode == 0n){
 					finish for (p in Place.places()) {
 						val solverSeed = random.nextLong();	
