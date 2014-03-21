@@ -129,7 +129,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	public def blockingPairError(wi:Int, pwi:Int, mi:Int) : Int {
 		var err:Int ;
 		val lvC = revpW(wi)(pwi);
-		val lvD = revpW(wi)(mi);
+		val lvD = revpW(wi)(mi);     
 		if (lvC == 0n){
             //current assignment of w (pw) is invalid, not present in Wprefs 
 			//err = length;

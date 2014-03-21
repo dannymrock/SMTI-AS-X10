@@ -32,7 +32,8 @@ public class Main {
 		    Option("m", "", "Solver mode distribution 0 for Places \"n\" for Activities (n number of activities). Default 0."),
 		    Option("t", "", "probability p2 - ties."),
 		    Option("c", "", "Probability to change vector in Intra-Team Communication "),
-		    Option("i", "", "Intra-team Communication Interval (iterations) . Default 0 - no communication."),
+		    Option("R", "", "Intra-team Communication Interval for Receive (iterations) . Default 0 - no communication."),
+		    Option("S", "", "Intra-team Communication Interval for Send (iterations) . Default 0 - no communication."),
 		    Option("j", "", "Inter-team Communication Interval (tim miliseconds) . Default 0 - no communication."),
 		    Option("n", "", "nodes_per_team parameter. Default 4."),
 		    Option("k", "", "poolsize."),
@@ -48,7 +49,8 @@ public class Main {
 		val solverMode	= opts("-m", 0n);
 		val p2			= opts("-t", 50n);
 		val probCVec	= opts("-c", 10n);
-		val intraTI		= opts("-i", 0n);
+		val intraTIRecv	= opts("-R", 0n);
+		val intraTISend = opts("-S", 0n);
 		val interTI		= opts("-j", 0);
 		val nodesPTeam	= opts("-n", 1n);
 		val poolSize	= opts("-k", 4n);
@@ -62,14 +64,15 @@ public class Main {
 		//at(Main.param) Main.param().poolSize = poolSize;
 		
 		if (outFormat == 0n){
-			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
+			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team Recv,intra-Team Send,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
 			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+probCVec+","+
-					intraTI+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
+					intraTIRecv+","+intraTISend+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
 					+","+inSeed+"\n");
 		}else{
 			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
-							"\nProbability to Change Vector: "+probCVec+"\nIntra-Team Comm. inteval: "+intraTI+" iterations"+
+							"\nProbability to Change Vector: "+probCVec+"\nIntra-Team Comm. inteval Recv: "+intraTIRecv+" iterations"+
+							"\nIntra-Team Comm. inteval Send: "+intraTISend+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
 							"\nPool Size: "+poolSize);
 
@@ -88,13 +91,13 @@ public class Main {
 
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];	
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
-				()=>new PlacesMultiWalks(vectorSz, intraTI, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
+				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
-			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution");
+			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution,walltime");
 		}else{
-			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
-			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+			Console.OUT.println("| Count | Time (s) |  Iters   | Place  |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS | walltime");
+			Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 		}
 		
 		// Installing solvers
@@ -137,9 +140,9 @@ public class Main {
 		
 		for (file in execList){
 			if(outFormat != 0n){
-				Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
 				Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
-				Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
+				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
 			}
 			var loadTime:Long = -System.nanoTime();
 			//Load first line wtith headers size p1 p2
@@ -174,8 +177,8 @@ public class Main {
 						}	
 					}
 				}else{
-					finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=32) at	(Place(i)) async {
-						val max = here.id; val min = Math.max(max-31, 0);
+					finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=16) at	(Place(i)) async {
+						val max = here.id; val min = Math.max(max-15, 0);
 						val r = new Random(random.nextLong()+here.id);
 						finish for(k in min..max){
 							val solverSeed = r.nextLong();
@@ -196,14 +199,14 @@ public class Main {
 				if(outFormat == 0n){
 					Console.OUT.print(file+",");
 					solvers().printStats(j,outFormat);
+					Console.OUT.println(","+extTime/1e9);
 				}else{
 					Console.OUT.printf("\r");
 					solvers().printStats(j,outFormat);
+					Console.OUT.printf(" %3.2f \n",extTime/1e9);
 					solvers().printAVG(j,outFormat);
 					Console.OUT.flush();
 				}
-				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
-				
 				var clearTime:Long = -System.nanoTime();
 				finish for (p in Place.places()) at (p) async{	
 					solvers().clear();
@@ -218,9 +221,9 @@ public class Main {
 				solvers().printAVG(testNo,outFormat);
 			}else{
 				Console.OUT.printf("\r");
-				Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
-				Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
-				Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+				Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+				Console.OUT.println("| Count | Time (s) |  Iters   | Place  |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
+				Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 				solvers().printAVG(testNo,outFormat);
 				//accStats.printAVG(testNo);
 				Console.OUT.printf("\n");
@@ -236,9 +239,9 @@ public class Main {
 		}else{
 			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
 			Console.OUT.println("\n   General Statistics for "+samplesNb+" problems, each one solved "+testNo+" times ");
-			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
-			Console.OUT.println("| Count | Time (s) |  Iters   | Place |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
-			Console.OUT.println("|-------|----------|----------|-------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+			Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
+			Console.OUT.println("| Count | Time (s) |  Iters   | Place  |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
+			Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 			solvers().printGenAVG(samplesNb*testNo,outFormat);
 			//accStats.printAVG(testNo);
 			Console.OUT.printf("\n");

@@ -115,12 +115,12 @@ public class CSPStats{
 		val sameIter : Double = same /(iters as Double);
 		//val changeF : Double = (change as Double)/count;
 		if (oF == 0n){
-			Console.OUT.println(count+","+time+","+iters+","+team+/*","+explorer+*/","+locmin+","+swaps
+			Console.OUT.print(count+","+time+","+iters+","+team+/*","+explorer+*/","+locmin+","+swaps
 					+","+reset+","+sameIter+","+restart+","+bp+","+singles+","+change+","+forceRestart+","+((bp == 0n && singles == 0n)?1n:0n));
 		}else{
-			Console.OUT.printf("|  %3d  | %8.4f | %8d | %2d-%2d | %8d |",count, time, iters, team, explorer, locmin);
+			Console.OUT.printf("|  %3d  | %8.4f | %8d | %3d-%2d | %8d |",count, time, iters, team, explorer, locmin);
 			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3d | %3d |",swaps,reset,sameIter,restart, bp, singles);
-			Console.OUT.printf(" %4d | %3d | %3d |\n", change, forceRestart,((bp == 0n && singles == 0n)?1:0));
+			Console.OUT.printf(" %4d | %3d | %3d |", change, forceRestart,((bp == 0n && singles == 0n)?1:0));
 		}
 	}
 
@@ -137,7 +137,7 @@ public class CSPStats{
 					+","+sameIter+","+restart/no+","+bp/(no as float)+","+singles/(no as Double)
 					+","+changeF+","+forceRestart/no+","+accPM+"\n");
 		}else{
-			Console.OUT.printf("|avg-%3d| %8.4f | %8d |  N/A  | %8d |", no, time/no, iters/no, locmin/no);
+			Console.OUT.printf("|avg-%3d| %8.4f | %8d |  N/A   | %8d |", no, time/no, iters/no, locmin/no);
 			Console.OUT.printf(" %8d | %8d | %5.1f | %3d | %3.1f | %3.1f | ",swaps/no,reset/no,sameIter,restart/no,
 				bp/(no as float), singles/(no as Double));
 			Console.OUT.printf("%4.1f | %3d |", changeF, forceRestart/no);

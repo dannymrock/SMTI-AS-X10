@@ -47,7 +47,9 @@ public interface ParallelSolverI {
      *
      */
 
-    def intraTI():Int;
+    def intraTIRecv():Int;
+    def intraTISend():Int;
+
 
     /**
      * Send a signal to the associated solver to kill it. The solver will

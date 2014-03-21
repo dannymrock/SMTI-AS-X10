@@ -146,6 +146,8 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 		bestCost = totalCost;
 		//Console.OUT.println("initial bestCost="+bestCost);
 		
+		var bestSent:Boolean = false;
+		
 		while( totalCost != 0n ){
 			// if (bestCost < bestOfBest)
 			// 	bestOfBest = bestCost;
@@ -161,8 +163,12 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 					restartVar();
 					totalCost = csp_.costOfSolution(true);
 					bestOfBest = x10.lang.Int.MAX_VALUE ;
+					Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
+					bestCost = totalCost;
+					bestSent = false;
 					nbInPlateau = 0n;
 					solver.clear();
+					
 					continue;
 				}
 				//Console.OUT.println("Not solution found");
@@ -241,56 +247,58 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 			// 	Utils.show("partial sol",csp_.getVariables());
 			//csp_.displaySolution();
 			
+
+	 		// --- Interaction with other solvers -----
+	 		Runtime.probe();		// Give a chance to the other activities
+	 		if (kill){	//if (kill.get()){ 
+	 			//Logger.debug(()=>" killed!");
+	 			break;		// Check if other place or activity have finished
+	 		}
+	 		
+	 		
 	 		/**
 	 		 *  optimization
 	 		 */
 	 		
-	 		if(totalCost < bestCost){
+	 
+	 		if(totalCost <= bestCost){
 	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCost = totalCost;
+	 			bestSent = false;
 	 		}
 	 		
-			// --- Interaction with other solvers -----
-	 		Runtime.probe();		// Give a chance to the other activities
-	 		if (kill){	//if (kill.get()){ 
-	 		    //Logger.debug(()=>" killed!");
-	 		    break;		// Check if other place or activity have finished
+	 		if( solver.intraTIRecv() != 0n && nbIter % solver.intraTIRecv() == 0n){        //here.id as Int ){
+	 			if(!bestSent){ 
+	 				solver.communicate( bestCost, bestConf );
+	 				bestSent = true;
+	 			}else{
+	 				solver.communicate( totalCost, csp_.variables);
+	 			}
 	 		}
-	 	
-	 		
-	 		if (solver.intraTI() != 0n) 
-	 		    if( nbIter % solver.intraTI() == 0n){        //here.id as Int ){
-	 		        //Console.OUT.println("In ");
-	 		        //Chang//
-	 		        solver.communicate( totalCost, csp_.variables); 
-	 		        if (random.nextInt(100n) < solverP.probChangeVector){
-	 		            val result = solver.getIPVector(csp_, totalCost );
-	 		            if (result){
-	 		                nbChangeV++;
-	 		                nbSwap += size ; //I don't know what happened here with costas reset
-	 		                mark.clear();
-	 		                totalCost = csp_.costOfSolution(true);
-	 		                //Console.OUT.println("Changing vector in "+ here);
-	 		            }
-	 		            
-	 		        }	
-	 		        //Console.OUT.println("Print Vectors("+here.id+") :");
-	 		        //myComm.printVectors();
-	 		        
-	 		        
+	 			
+	 		if(solver.intraTIRecv() != 0n && nbIter % solver.intraTIRecv() == 0n){        //here.id as Int ){
+	 			val result = solver.getIPVector(csp_, totalCost );
+	 			if (result){
+	 				nbChangeV++;
+	 				mark.clear();
+	 				totalCost = csp_.costOfSolution(true);
+	 				bestSent = true;
+	 				//Console.OUT.println("Changing vector in "+ here);
+	 			}
 	 		}
 	 		
 	 		if (forceRestart){
 	 			//restart
 	 			Logger.debug(()=>"   ASSolverPermut : force Restart");
 	 			forceRestart = false;
-	 			csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
+	 			nbIter = solverP.restartLimit;
+	 			//csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
 	 			nbForceRestart++;
-	 			restartVar();
-	 			totalCost = csp_.costOfSolution(true);
-	 			bestOfBest = x10.lang.Int.MAX_VALUE ;
-	 			nbInPlateau = 0n;
-	 			solver.clear();
+	 			// restartVar();
+	 			// totalCost = csp_.costOfSolution(true);
+	 			// bestOfBest = x10.lang.Int.MAX_VALUE ;
+	 			// nbInPlateau = 0n;
+	 			// solver.clear();
 	 			continue;
 	 		}
 	 		// ----- end of interaction with other solvers -----
@@ -605,6 +613,7 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 		nbSameVar = 0n;
 		nbLocalMin = 0n;
 		nbReset = 0n;
+		
 		
 	}
 }

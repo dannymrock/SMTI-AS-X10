@@ -40,7 +40,8 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     var solver:ASSolverPermut(sz);
     var time:Long;
 	
-    val updateI : Int;
+    val intraTIRecv : Int;
+    val intraTISend : Int;
     //val commOption : Int;
 	
     var bcost : Int;
@@ -60,9 +61,10 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     /**
      * 	Constructor of the class
      */
-    public def this(vectorSize:Long, upI : Int, interTI : Long , thread : Int , ps : Int, npT : Int ){
+    public def this(vectorSize:Long, intraTIRecv : Int, intraTISend : Int, interTI : Long , thread : Int , ps : Int, npT : Int ){
     	property(vectorSize,ps);
-    	updateI = upI; 
+    	this.intraTIRecv = intraTIRecv;
+    	this.intraTISend = intraTISend;
     	//commOption = commOpt;
     	nbExplorerPT = npT; // will be a parameter 
     	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
@@ -82,7 +84,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val size = sz as Int;
     	var nsize:Int = size;
     	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss);
-    	commM = new CommManager(sz, 0n , st, updateI,0n, poolSize, nTeams );
+    	commM = new CommManager(sz, 0n , st, intraTIRecv, intraTISend ,0n, poolSize, nTeams );
     }
     	
     
@@ -147,8 +149,9 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 	commM.communicate(totalCost, variables);
     }
 	
-    @Inline public def intraTI():Int = commM.intraTI;
-	
+    @Inline public def intraTIRecv():Int = commM.intraTIRecv;
+    @Inline public def intraTISend():Int = commM.intraTISend;
+    
 	//val monitor = new Monitor("PlacesMultiWalks"); 
 	public def kill() {
 		if (solver != null) {

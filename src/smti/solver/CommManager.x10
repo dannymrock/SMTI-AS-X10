@@ -1,5 +1,6 @@
 package smti.solver;
 import smti.util.*;
+import x10.util.Random;
 /**	This class containts all the basic CommManager configuration info, for the
  * 	Adaptive search solver x10 implementation ASSolverPermut
  * 	
@@ -29,7 +30,10 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	var solverMode : Int;
 	
 	/** Number of iterations between each communication activity */
-	var intraTI : Int;
+	var intraTIRecv : Int;
+	
+	var intraTISend : Int;
+	
 	
 	/** Number of iterations between each communication activity */
 	var interTI : Int;
@@ -45,7 +49,7 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	val nbTeams : Int;
 	val myTeamId : Int;
 	
-	//val random = new x10.util.Random();
+	var random :Random = new Random();
 	
 	/**
 	 * The reference to all team members, for communication.
@@ -53,11 +57,12 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	val solvers:PlaceLocalHandle[ParallelSolverI(sz)];
 	
 	def this( sz:Long, solverModeIn : Int , ss: PlaceLocalHandle[ParallelSolverI(sz)], 
-	        intraTeamI : Int, interTeamI : Int ,  ps : Int, nT : Int){
+	        intraTIRecv : Int, intraTISend : Int, interTeamI : Int ,  ps : Int, nT : Int){
 		property(sz, ps);
 		solvers = ss;
 	    solverMode = solverModeIn;
-		intraTI = intraTeamI;
+		this.intraTIRecv = intraTIRecv;
+		this.intraTISend = intraTISend;
 		interTI = interTeamI;
 		//commOption = cOption;
 		nbTeams = nT;
@@ -72,11 +77,13 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	
 	public def setSeed(seed:Long){
 		ep.setSeed(seed);
+		random = new Random(seed);
 	}
 	
 	public def setValues(toSet: CommManager{self.sz==this.sz}){
 		this.solverMode = toSet.solverMode;
-		this.intraTI = toSet.intraTI;
+		this.intraTIRecv = toSet.intraTIRecv;
+		this.intraTISend = toSet.intraTISend;
 		this.interTI = toSet.interTI;
 	}
 	/**
@@ -125,32 +132,29 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	public def getIPVector(csp_ : SMTIModel(sz), myCost : Int):Boolean { // csp renamed csp_ to avoid issue with codegen in managed backend
 		// if (commOption == NO_COMM) return false;
 		Logger.debug(()=> "CommManager: getIPVector: entering.");
+		var a : Maybe[CSPSharedUnit(sz)];
 		if (solverMode == USE_PLACES) {
 			Logger.debug(()=>"CommManager: getIPVector solver mode: Places.");
 			val place = Place(myTeamId);
 			val ss=solvers;
-			val a : Maybe[CSPSharedUnit(sz)];
+			
 			if (place == here )
 				a = ep.getRemoteData();
 			else{
-				 a = at(place) ss().getPoolData();
+				a = at(place) ss().getPoolData();
 			}
 			//if (place.id==0)Console.OUT.println(here+" comm to "+place+" and get "+a().cost);
-			if ( a!=null && (myCost + delta) > a().cost ){					 
-				csp_.setVariables(a().vector);
-				return true; 
-			}
-			return false;
 		}else if (solverMode == USE_ACTIVITIES){
 			Logger.debug(()=>"CommManager: getIPVector solver mode: Act.");
-			val a = ep.getRemoteData();
-			if ( a!=null && (myCost + delta) > a().cost ){
-				csp_.setVariables(a().vector);
-				return true; 
-			}
-			return false;
+			a = ep.getRemoteData();
 		}else{
+			a= null;
 			Console.OUT.println("ERROR: Unknown solver mode");
+		}
+		if ( a!=null && (myCost + delta) > a().cost ){
+			//if ( a!=null && (myCost + delta) > a().cost &&  random.nextInt(100n) < 95){					 
+			csp_.setVariables(a().vector);
+			return true; 
 		}
 		return false;
 	}

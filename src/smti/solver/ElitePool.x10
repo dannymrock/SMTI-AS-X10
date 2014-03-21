@@ -77,7 +77,7 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 			//Console.OUT.println("insert vector with cost "+cost);	
 			bestPartialSolutions(victim) = new CSPSharedUnit(variables.size, cost, Utils.copy(variables), place);
 			
-			if (cost <= bestCost){ 
+			if (cost < bestCost){ 
 				bestCost = cost;
 				//Console.OUT.println("New Best Cost = "+bestCost+" in place "+place);
 			}				
