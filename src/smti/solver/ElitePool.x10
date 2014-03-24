@@ -10,8 +10,6 @@ import x10.util.Random;
 public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	var nbEntries : Int = 0n;
 	val bestPartialSolutions = new Rail(poolSize, CSPSharedUnit(sz,0n as Int,null,0n as Int)); // dummy value
-	var bestCost : Int = Int.MAX_VALUE;
-	var worstCost : Int = Int.MAX_VALUE;
 	var random:Random = new Random();
 	val monitor = new Monitor("ElitePool");
 	
@@ -22,14 +20,7 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		//});
 	}
 	
-	public def isGoodCost(cost : Int) : Boolean {
-		if (nbEntries == 0n) return true;
-		for (i in 0..(nbEntries-1)){
-			if (cost <= bestPartialSolutions(i).cost)
-				return true;
-		}
-		return false;
-	}
+	
 	/**
 	 * Insert a copy of variables in the best partial solutions. Intended to be 
 	 * invoked by solvers running at remote places.
@@ -41,48 +32,28 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	}
 
 	protected def tryInsertVector0( cost : Int , variables : Rail[Int]{self.size==sz}, place : Int ):Unit {
-		
-		if (cost >= worstCost) return Unit();
-
+		var victim:Int;
 		if( nbEntries < poolSize ){
-			//insert in the last place
-			//Console.OUT.println("insert cost "+cost);
-			//Main.show("insert vector", variables);
-			//Console.OUT.println("insert vector with cost "+cost);
-			bestPartialSolutions( nbEntries++ ) = new CSPSharedUnit(sz, cost, Utils.copy(variables), place );
-			if (cost < bestCost){ 
-				bestCost = cost;
-				//Console.OUT.println("New Best Cost = "+bestCost+" in place "+place);
-			}	
-			
+			victim = nbEntries++;
 		}else{
 			// No place available select a victim
 			
-			var equal : Boolean = false;
-			var victim : Int = 0n;
-			var nvic : Int = 0n;
-			var costToChange : Int = cost;
-			
+			victim = -1n;
+		
 			for (i in 0n..(nbEntries-1n)){
-				if (worstCost == bestPartialSolutions(i).cost){
-					if (random.nextInt(++nvic) == 0n)
-						victim = i;
+				if (cost < bestPartialSolutions(i).cost){
+					victim = i;
+				} else if (cost == bestPartialSolutions(i).cost && compareVectors(variables, bestPartialSolutions(i).vector)){
+					victim = -1n;
+					break;
 				}
-				
-				if (cost == bestPartialSolutions(i).cost){
-					if (compareVectors(variables, bestPartialSolutions(i).vector))
-						return Unit();
-				}
-			}	
+			}
+		}
+		if (victim >= 0n) {
 			//Console.OUT.println("insert vector with cost "+cost);	
 			bestPartialSolutions(victim) = new CSPSharedUnit(variables.size, cost, Utils.copy(variables), place);
-			
-			if (cost < bestCost){ 
-				bestCost = cost;
-				//Console.OUT.println("New Best Cost = "+bestCost+" in place "+place);
-			}				
 		}
-		updateWorstCost();
+		
 		return Unit();
 	}
 	
@@ -91,16 +62,6 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		for (i in 0..( vec1.size-1))
 			if(vec1(i) != vec2(i)) return false;
 		return true;
-	}
-	
-	public def updateWorstCost(){
-	    monitor.atomicBlock(()=> {
-	        var wc : Int = 0n;
-	        for(i in 0..(nbEntries-1))
-	            if (bestPartialSolutions(i).cost > wc) wc = bestPartialSolutions(i).cost; 
-	        worstCost = wc;	
-	        Unit()
-	    });
 	}
 	
 	public def printVectors(){
@@ -118,7 +79,7 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 			//if (here.id==0)Console.OUT.println(here+"aqui");
 			if (nbEntries < 1n) return null;
 			val index = random.nextInt(nbEntries);
-			if (index >= nbEntries) Console.OUT.println("Golden: index is " + index + " needed to be < " + nbEntries);
+			//if (index >= nbEntries) Console.OUT.println("Golden: index is " + index + " needed to be < " + nbEntries);
 			//if (here.id==0)Console.OUT.println(here+"alli");
 			return new Maybe(bestPartialSolutions(index));
 		});
@@ -127,8 +88,6 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	public def clear(){
 	    monitor.atomicBlock(()=> {
 	        nbEntries = 0n;
-	        bestCost = Int.MAX_VALUE;
-	        worstCost = Int.MAX_VALUE;
 	        Unit()
 	    });
 	}

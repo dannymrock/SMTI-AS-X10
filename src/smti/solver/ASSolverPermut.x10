@@ -1,5 +1,5 @@
 package smti.solver;
-import smti.util.*;
+import smti.util.Logger;
 import x10.util.Random;
 import x10.util.concurrent.AtomicBoolean;
 
