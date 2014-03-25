@@ -1,6 +1,6 @@
 
 package smti.solver;
-import smti.util.*;
+import smti.util.Logger;
 /** PlaceMultiWalk is the parallel implementation of Random Walk Adaptive Search solver
  * 	in the X10 language. This implementation use distributed isolated instances
  * 	of the solver, each one with a diferent seeds in order to have differents 
@@ -58,19 +58,19 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     
     var seed:Long;
 	
+    val changeProb:Int;
     /**
      * 	Constructor of the class
      */
-    public def this(vectorSize:Long, intraTIRecv : Int, intraTISend : Int, interTI : Long , thread : Int , ps : Int, npT : Int ){
+    public def this(vectorSize:Long, intraTIRecv : Int, intraTISend : Int, interTI : Long, ps : Int,
+    		npT : Int, changeProb:Int ){
     	property(vectorSize,ps);
     	this.intraTIRecv = intraTIRecv;
     	this.intraTISend = intraTISend;
     	//commOption = commOpt;
     	nbExplorerPT = npT; // will be a parameter 
     	nTeams = Place.MAX_PLACES as Int / nbExplorerPT ;
-    	
-    	
-    	
+    	this.changeProb = changeProb;
     }
     //var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
     
@@ -84,7 +84,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val size = sz as Int;
     	var nsize:Int = size;
     	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss);
-    	commM = new CommManager(sz, 0n , st, intraTIRecv, intraTISend ,0n, poolSize, nTeams );
+    	commM = new CommManager(sz, 0n , st, intraTIRecv, intraTISend ,0n, poolSize, nTeams, changeProb);
     }
     	
     
@@ -138,7 +138,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
     			//csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
-    			csp_.verified(solver.bestConf as Valuation(sz));
+    			csp_.verify(solver.bestConf as Valuation(sz));
     		}
     	}
     }

@@ -1,5 +1,5 @@
 package smti.solver;
-import smti.util.*;
+//import smti.util.*;
 /**
  * A solver runs a local solver in every place, within the frame of a
  * ParallelSolverI instance. All communication by a solver with other solvers

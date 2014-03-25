@@ -1,4 +1,4 @@
-package smti.solver;
+package smti.solver; 
 import smti.util.Logger;
 import x10.util.Random;
 import x10.util.concurrent.AtomicBoolean;
@@ -16,7 +16,7 @@ import x10.util.concurrent.AtomicBoolean;
  * 	
  */
 
-public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSolverI(sz)) {
+public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 
     val mark = new Rail[Int] (size, 0n); 
 	val solverP = new ASSolverParameters();
@@ -269,7 +269,7 @@ public class ASSolverPermut(sz:Long, size:Int, /*seed:Long,*/ solver:ParallelSol
 	 		
 	 		if( solver.intraTIRecv() != 0n && nbIter % solver.intraTIRecv() == 0n){        //here.id as Int ){
 	 			if(!bestSent){ 
-	 				solver.communicate( bestCost, bestConf );
+	 				solver.communicate( bestCost, bestConf as Valuation(sz));
 	 				bestSent = true;
 	 			}else{
 	 				solver.communicate( totalCost, csp_.variables);

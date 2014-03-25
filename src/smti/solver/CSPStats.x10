@@ -1,5 +1,5 @@
-package smti.solver;
-import smti.util.*;
+package smti.solver; 
+import smti.util.Monitor;
 /** CSPStats
  * 	This class implements a container for the CSP solver statistics. 
  * 

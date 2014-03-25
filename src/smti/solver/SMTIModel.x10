@@ -1,19 +1,20 @@
 package smti.solver;
-import smti.util.*;
+import smti.util.Logger;
+import smti.util.RandomTools;
 import x10.array.Array_2;
-import x10.io.File;
-import x10.io.FileReader;
-import x10.io.FileWriter;
+//import x10.io.File;
+//import x10.io.FileReader;
+//import x10.io.FileWriter;
 
 public class SMTIModel (sz:Long, seed:Long){
 	/** length:size of the problem  **/
-	protected val length = sz as Int;
+	val length = sz as Int;
 	/** variables:array with current configuration (index man - value woman) **/
 	val variables = new Rail[Int]( sz, (i:Long) => i as Int);
 	/** r:random number generator **/
-	protected val random  = new RandomTools(seed);
+	val random  = new RandomTools(seed);
 	/** solverParams:parameters of the problem **/
-	protected val solverParams = new ASSolverParameters();
+	val solverParams = new ASSolverParameters();
 	
 	/** menPref:Matrix with the men preferences **/
 	val menPref : Rail[Rail[Int]];
@@ -41,9 +42,9 @@ public class SMTIModel (sz:Long, seed:Long){
     
     
 	public def this (lengthProblem : Long , seed : Long, mPrefs:Rail[Rail[Int]], wPrefs:Rail[Rail[Int]], 
-			restLimit:Int, probCV:Int){
+			restLimit:Int){
 		property(lengthProblem, seed);
-		this.initParameters(restLimit, probCV);
+		this.initParameters(restLimit);
 		
 		val l = length as Int;
 		menPref = mPrefs;
@@ -97,7 +98,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	/** initParameters
 	 *  It is necessary to fine tune the parameters for this problem
 	 */
-	private def initParameters(rLimit:Int, probCV:Int){
+	private def initParameters(rLimit:Int){
 		
 		solverParams.probSelectLocMin =  100n; // try ~80%  
 		solverParams.freezeLocMin = 1n;
@@ -110,7 +111,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
 		
-	    solverParams.probChangeVector = probCV; //10n;
+	    //solverParams.probChangeVector = probCV; //10n;
 	    
 	    //weight = System.getenv().get("V")!=null?length:1n;
 	    //Console.OUT.println("restart Limit= "+solverParams.restartLimit);
@@ -378,7 +379,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	 *  Checks if the solution is valid.
 	 */
 
-	public  def verified(match:Valuation(sz)):Boolean {
+	public  def verify(match:Valuation(sz)):Boolean {
 		var w:Int;
 		var pmi:Int = 0n;
 		var pwi:Int = 0n; //w_of_m, m_of_w;
@@ -386,7 +387,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		var singles:Int = 0n;
 		
 		val permutV = new Rail[Int](sz, 0n);
-		variablesW.clear();
+		val variablesWv = new Rail[Int](length,0n);
 		for (mi in match.range()){
 			val value = match(mi);
 			permutV(value-1)++;
@@ -394,7 +395,7 @@ public class SMTIModel (sz:Long, seed:Long){
 				Console.OUT.println("Not valid permutation, value "+ value +" is repeted");
 			}
 			if (value==0n)	Console.OUT.println("not valid Zero in solution");
-			variablesW(value-1) = mi as Int + 1n;
+			variablesWv(value-1) = mi as Int + 1n;
 		}
 		
 		// verify existence of undomminated BP's for each man 
@@ -423,9 +424,9 @@ public class SMTIModel (sz:Long, seed:Long){
 					w = -w;
 				if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
 				// than the level of pref of pm (current match) "stop condition"
-				pwi = variablesW(w-1)-1n; //pw current match of the current
+				pwi = variablesWv(w-1)-1n; //pw current match of the current
 				// 	// Verify if w prefers m to pw
-				e = blockingPairError(w-1n, pwi, mi as Int);
+				e = verifyBlockingPairError(w-1n, pwi, mi as Int);
 				
 				if (e > 0n){
 					r++;
@@ -438,109 +439,28 @@ public class SMTIModel (sz:Long, seed:Long){
 		return (r + singles == 0n);
 	}
 	
-	// static def createPrefs(l:Long,seed:Long):Rail[Rail[Int]]{
-	// 	val r = new RandomTools(seed);
-	// 	val prefs = new Rail[Rail[Int]](l, (Long) => new Rail[Int](r.randomPermut(l, 1n)));
-	// 	return prefs;
-	// }
-	// /**
-	//  *  Create SMTI problem 
-	//  */
-	// static def createPrefs(p1:Int, p2:Int, l:Int, seed:Long,  mP:Rail[Rail[Int]], wP:Rail[Rail[Int]]){
-	// 	val r = new RandomTools(seed);
-	// 	var mPref:Rail[Rail[Int]] ;
-	// 	var wPref:Rail[Rail[Int]] ;
-	// 	val wDel = new Rail[Int](l as Long, 0n);
-	// 	
-	// 	// delete some entries with some probability p1
-	// 	var del:Int;
-	// 	var rep:Int = 1n;
-	// 	
-	// 	 do{
-	// 		//Console.OUT.println("Creating SMTI");
-	// 		rep = 0n;
-	// 		wDel.clear();
-	// 		mPref = SMTIModel.createPrefs(l as Long, r.randomLong());
-	// 		wPref = SMTIModel.createPrefs(l as Long, r.randomLong());
-	// 		loop:for (m in 0..(l-1)){
-	// 			del = 0n;
-	// 			for (p in 0..(l-1)){
-	// 				if (r.randomInt(100n) <= p1){
-	// 					del++;
-	// 					val dw = mPref(m)(p) - 1n;
-	// 					// deleting in mPref
-	// 					mPref(m)(p) = 0n;
-	// 					for(k in wPref(dw).range())
-	// 						if (wPref(dw)(k) - 1n == m as Int){
-	// 							// deleting in corresponding wPref
-	// 							wPref(dw)(k) = 0n;
-	// 							wDel(dw)++;
-	// 							if(wDel(dw)==l){
-	// 								Logger.debug(()=>{"Error: all W preferences deleted"});
-	// 								//TODO: Restart random problem generator 
-	// 								rep=1n;
-	// 								
-	// 								break loop;
-	// 							}
-	// 						}
-	// 				}
-	// 			}
-	// 			if (del == l){
-	// 				Logger.debug(()=>{"Error: all M preferences deleted"});
-	// 				//TODO: Restart random problem generator 
-	// 				rep=1n;
-	// 				
-	// 				break;
-	// 			}
-	// 			
-	// 		} 
-	// 		
-	// 	}while(rep == 1n);
-	// 	
-	// 	// create some ties in entries with some probabilities p2
-	// 	var noFirst:Int;
-	// 	for (m in 0..(l-1)){
-	// 		noFirst=0n;
-	// 		for (p in 0..(l-1)){
-	// 			if(mPref(m)(p)==0n)
-	// 				continue;
-	// 			if(noFirst==0n){
-	// 				noFirst=1n;
-	// 				continue;
-	// 			}
-	// 			if (r.randomInt(100n) <= p2){
-	// 				//val dw = mPref(m)(p);
-	// 				mPref(m)(p) *= -1n; 	
-	// 			}
-	// 		}
-	// 	}
-	// 	
-	// 	for (w in 0..(l-1)){
-	// 		noFirst=0n;
-	// 		for (p in 0..(l-1)){
-	// 			if(wPref(w)(p)==0n)
- //                   continue;
-	// 			if(noFirst==0n){
-	// 				noFirst=1n;
-	// 				continue;
-	// 			}
-	// 			if (r.randomInt(100n) <= p2){
-	// 				//val dw = mPref(m)(p);
-	// 				wPref(w)(p) *= -1n; 	
-	// 			}
-	// 		}
-	// 	}
-	// 	
-	// 	Rail.copy(mPref, mP);
-	// 	Rail.copy(wPref, wP);	
-	// }
-	
-	
-	// static def createSMTI(l:Long,seed:Long):Rail[Rail[Int]]{
-	// 	val r = new RandomTools(seed);
-	// 	val prefs = new Rail[Rail[Int]](l, (Long) => new Rail[Int](r.randomPermut(l, 1n)));
-	// 	return prefs;
-	// }
+	public def verifyBlockingPairError(wi:Int, pwi:Int, mi:Int) : Int {
+		var errv:Int ;
+		val lvCv = revpW(wi)(pwi);
+		val lvDv = revpW(wi)(mi);     
+		if (lvCv == 0n){
+			//current assignment of w (pw) is invalid, not present in Wprefs 
+			//err = length;
+			errv = 1n;
+		}else if (lvDv == 0n){
+			// m is not present in the preferences of w
+			errv = 0n;
+		}else{
+			errv = lvCv - lvDv;	// computing distance between current and desired assignment
+			errv = errv > 0n ? errv + 1n : errv;
+		}
+		
+		if (errv < 0n)		/* (m,w) is a BP (blocking pair) */
+			errv = 0n;
+		
+		//Console.OUT.println("bpE in w "+w+", pw "+pw+", m "+m +" = "+err);
+		return errv;
+	}
 	
 	/**
 	 * 	Set the parameter in the solver

@@ -1,5 +1,5 @@
-package smti.solver;
-import smti.util.*;
+package smti.solver; 
+//import smti.util.Logger;
 /** ASSolverParameters
  * 	Encapsulate all the parameters for AS Solver
  * 

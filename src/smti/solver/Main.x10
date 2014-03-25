@@ -1,5 +1,5 @@
 package smti.solver;
-import smti.util.*;
+import smti.util.Logger;
 import x10.util.Team;
 
 /** Main
@@ -34,7 +34,7 @@ public class Main {
 		    Option("c", "", "Probability to change vector in Intra-Team Communication "),
 		    Option("R", "", "Intra-team Communication Interval for Receive (iterations) . Default 0 - no communication."),
 		    Option("S", "", "Intra-team Communication Interval for Send (iterations) . Default 0 - no communication."),
-		    Option("j", "", "Inter-team Communication Interval (tim miliseconds) . Default 0 - no communication."),
+		    Option("I", "", "Inter-team Communication Interval (tim miliseconds) . Default 0 - no communication."),
 		    Option("n", "", "nodes_per_team parameter. Default 4."),
 		    Option("k", "", "poolsize."),
 		    Option("y", "", "seed. Default random"),
@@ -48,10 +48,10 @@ public class Main {
 		val testNo		= opts("-b", 10n);
 		val solverMode	= opts("-m", 0n);
 		val p2			= opts("-t", 50n);
-		val probCVec	= opts("-c", 10n);
+		val changeProb	= opts("-c", 100n);
 		val intraTIRecv	= opts("-R", 0n);
 		val intraTISend = opts("-S", 0n);
-		val interTI		= opts("-j", 0);
+		val interTI		= opts("-I", 0);
 		val nodesPTeam	= opts("-n", 1n);
 		val poolSize	= opts("-k", 4n);
 		val inSeed		= opts("-y", 0);
@@ -65,13 +65,13 @@ public class Main {
 		
 		if (outFormat == 0n){
 			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team Recv,intra-Team Send,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
-			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+probCVec+","+
+			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+changeProb+","+
 					intraTIRecv+","+intraTISend+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
 					+","+inSeed+"\n");
 		}else{
 			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
-							"\nProbability to Change Vector: "+probCVec+"\nIntra-Team Comm. inteval Recv: "+intraTIRecv+" iterations"+
+							"\nProbability to Change Vector: "+changeProb+"\nIntra-Team Comm. inteval Recv: "+intraTIRecv+" iterations"+
 							"\nIntra-Team Comm. inteval Send: "+intraTISend+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
 							"\nPool Size: "+poolSize);
@@ -91,7 +91,8 @@ public class Main {
 
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];	
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
-				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, 0n, poolSize, nodesPTeam) as ParallelSolverI(vectorSz));
+				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, poolSize, nodesPTeam,
+						changeProb) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
 			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution,walltime");
@@ -168,7 +169,7 @@ public class Main {
 				var extTime:Long = -System.nanoTime();
 				val cspGen : ()=>SMTIModel(vectorSz);
 				val modelSeed = random.nextLong();
-				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref,restLimit,probCVec) as SMTIModel(vectorSz);
+				cspGen=():SMTIModel(vectorSz)=> new SMTIModel(sizeF as Long, modelSeed, mPref, wPref,restLimit) as SMTIModel(vectorSz);
 				if (solverMode == 0n){
 					finish for (p in Place.places()) {
 						val solverSeed = random.nextLong();	

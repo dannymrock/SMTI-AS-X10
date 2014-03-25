@@ -1,5 +1,8 @@
-package smti.solver;
-import smti.util.*;
+package smti.solver; 
+import smti.util.Logger;
+import smti.util.Monitor;
+import smti.util.Unit;
+import smti.util.Utils;
 import x10.util.Random;
 /**
  * Maintain a poolSize set of best partial solutions. These

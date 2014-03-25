@@ -1,5 +1,5 @@
-package smti.solver;
-import smti.util.*;
+package smti.solver; 
+import smti.util.Logger;
 import x10.util.Random;
 /**	This class containts all the basic CommManager configuration info, for the
  * 	Adaptive search solver x10 implementation ASSolverPermut
@@ -17,8 +17,8 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	
 	public static NO_COMM = 0n;
 	public static ALL_TO_ZERO = 1n;
-	public static ALL_TO_ALL = 2n;
 	public static ALL_TO_NEIGHBORS = 3n;
+	public static ALL_TO_ALL = 2n;
 	public static TEAM = 4n;
 	
 	
@@ -51,28 +51,31 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	
 	var random :Random = new Random();
 	
+	val changeProb:Int;
+	
 	/**
 	 * The reference to all team members, for communication.
 	 */
 	val solvers:PlaceLocalHandle[ParallelSolverI(sz)];
 	
 	def this( sz:Long, solverModeIn : Int , ss: PlaceLocalHandle[ParallelSolverI(sz)], 
-	        intraTIRecv : Int, intraTISend : Int, interTeamI : Int ,  ps : Int, nT : Int){
-		property(sz, ps);
+	        intraTIRecv : Int, intraTISend : Int, interTeamI : Int ,  poolSize: Int, teamsNumber : Int,
+	        changeProb:Int){
+		property(sz, poolSize);
 		solvers = ss;
 	    solverMode = solverModeIn;
 		this.intraTIRecv = intraTIRecv;
 		this.intraTISend = intraTISend;
 		interTI = interTeamI;
 		//commOption = cOption;
-		nbTeams = nT;
+		nbTeams = teamsNumber;
 		myTeamId = here.id as Int % nbTeams;
 		//headNodeId = 
 
 		val m = myTeamId; val s = solverMode;
 		Logger.debug(()=>{(s==0n ? ("My team is: " + m):("My team is:"+here.id))});
 		//Console.OUT.println(s==0n ? ("My team is: " + m):("My team is:"+here.id));
-		
+		this.changeProb = changeProb;
 	}
 	
 	public def setSeed(seed:Long){
@@ -151,7 +154,7 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 			a= null;
 			Console.OUT.println("ERROR: Unknown solver mode");
 		}
-		if ( a!=null && (myCost + delta) > a().cost ){
+		if ( a!=null && (myCost + delta) > a().cost &&  random.nextInt(100n) < changeProb ){
 			//if ( a!=null && (myCost + delta) > a().cost &&  random.nextInt(100n) < 95){					 
 			csp_.setVariables(a().vector);
 			return true; 
