@@ -103,7 +103,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.probSelectLocMin =  100n; // try ~80%  
 		solverParams.freezeLocMin = 1n;
 		solverParams.freezeSwap = 0n;
-		solverParams.resetLimit =1n; //may be 1 is better for size 30 try()
+		solverParams.resetLimit =1n; 
 		solverParams.resetPercent = 0n;
 		solverParams.restartLimit = rLimit;/*30n*length*/; 
 		solverParams.restartMax = 0n;
@@ -143,7 +143,7 @@ public class SMTIModel (sz:Long, seed:Long){
 			err = err > 0n ? err + 1n : err;
 		}
 		
-		if (err < 0n)		/* (m,w) is a BP (blocking pair) */
+		if (err < 0n)		/* if err > 0 (m,w) is a BP (blocking pair) */
 			err = 0n;
 		
 		//Console.OUT.println("bpE in w "+w+", pw "+pw+", m "+m +" = "+err);
@@ -164,8 +164,7 @@ public class SMTIModel (sz:Long, seed:Long){
          var pwi:Int = 0n; // index of current match of wi
          var bpnumber:Int = 0n;
          var singles:Int = 0n;
-         var singleF:Boolean = false;
-         
+          
          /// if(shouldBeRecorded){
         	///  Console.OUT.println("cost of Sol");
         	///  Utils.show("conf:",variables);
@@ -173,7 +172,7 @@ public class SMTIModel (sz:Long, seed:Long){
          
          variablesW.clear();
          for (mi in variables.range()){ // mi -> man index (man number = mi + 1)
-        	 if (variables(mi)==0n) continue;
+        //	 if (variables(mi)==0n) continue;
         	 variablesW(variables(mi)-1) = mi as Int + 1n;
          }
          
@@ -183,28 +182,28 @@ public class SMTIModel (sz:Long, seed:Long){
         	
         	var bpMi:Int = -1n;		/* NB: -1 to avoid false positive in the test of costIfSwap */
         	var e:Int = 0n; 	 	
-        	var prefPM:Int = -1n; // m's current match level of preference  
+        	var levelPM:Int = revpM(mi)(pmi); // m's current match level of preference  
         	 
-        	if(revpM(mi)(pmi) == 0n ){ //verify if m-pm is single (have a not valid match)
-        		prefPM = length;
-        		singleF=true;
+        	if(levelPM == 0n ){ //verify if m-pm is single (have a not valid match)
+        		levelPM = length;
+        		if (shouldBeRecorded){
+        			singV(singles) = mi as Int;
+        		}
         		singles++;
-        	}else{ // m has a valid assignment pm
-        		prefPM = revpM(mi)(pmi);
         	}
         	 
-        	var prefW:Int = 0n;
+        	var levelW:Int = 0n;
         	//for(li in menPref(mi).range()){ //li level of preference index
         	var li:Long=0;
             for(li=0;(w=menPref(mi)(li))!=0n;li++){
         	//w = menPref(mi)(li);
         		//if (w == 0n) continue; //break; 	//New format -  file w/o 0s  
         		if(w > 0n)			// new level of preference
-        			prefW++;
+        			levelW++;
         		else						// if w < 0 -> same level of preference (tie) 
         			w = -w;
         		 
-        		if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
+        		if (levelW >= levelPM) break; //stop if cuerrent level of pref is bigger or equal 
         		// than the level of pref of pm (current match) "stop condition"
         		 
         		pwi = variablesW(w-1)-1n; //pwi index of the current match of the woman w
@@ -220,10 +219,6 @@ public class SMTIModel (sz:Long, seed:Long){
         	if (shouldBeRecorded){
         		// val bpm = bpM; val vale = e;
         		// if (r == 1n) Logger.info(()=>{"bp mi="+mi+" bpM "+bpm+" err="+vale});
-        		if(singleF){
-        			singV(singles-1) = mi as Int;
-        			singleF = false;
-        		}
         		errV(mi) = e;
         		bpi(mi) = bpMi;
         		///Console.OUT.println("mi= "+mi+" e= "+e+" bpMi= "+bpMi);
@@ -326,13 +321,11 @@ public class SMTIModel (sz:Long, seed:Long){
 				///Console.OUT.println("Reset no 2nd BP i= "+i+" j = "+ j);
 				swapVariables(i, j);
 			}
-		}else{
-			if(nbSingles > 0n){
-				val i = random.randomInt(nbSingles);
-				val j = random.randomInt(length);
-				///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
-				swapVariables(singV(i), j);
-			}
+		}else{			
+			val i = random.randomInt(nbSingles);
+			val j = random.randomInt(length);
+			///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
+			swapVariables(singV(i), j);			
 		}
 		
 		//2nd SINGLES
@@ -403,26 +396,26 @@ public class SMTIModel (sz:Long, seed:Long){
 			pmi = match(mi)-1n; // pm current match of mi 
 			var e:Int = 0n; 	 	
 			var bF:Int = 0n;
-			var prefPM:Int = -1n; //m's current match level of preference  
+			var levelPM:Int = -1n; //m's current match level of preference  
 				
 			if( revpM(mi)(pmi)==0n ){
-				prefPM = length; //put some value
+				levelPM = length; //put some value
 				singles++;
 				Console.OUT.println("Error m="+ (mi+1n) +" w="+(pmi+1n)+" is not a valid match (single)");
 			} else{ // m has a valid assignment pm
-				prefPM = revpM(mi)(pmi);
+				levelPM = revpM(mi)(pmi);
 			}
 			
-			var prefW:Int = 0n;
+			var levelW:Int = 0n;
 			for(li in menPref(mi).range()){ //li level of preference index
 				
 				w = menPref(mi)(li);
 				if (w == 0n) continue;	// entry deleted
 				if(w > 0n)			// new level of preference
-					prefW++;
+					levelW++;
 				else						// if w < 0 -> same level of preference (tie) 
 					w = -w;
-				if (prefW >= prefPM) break; //stop if cuerrent level of pref is bigger or equal 
+				if (levelW >= levelPM) break; //stop if cuerrent level of pref is bigger or equal 
 				// than the level of pref of pm (current match) "stop condition"
 				pwi = variablesWv(w-1)-1n; //pw current match of the current
 				// 	// Verify if w prefers m to pw

@@ -66,11 +66,6 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	/** For Exhaustive search */
 	var nbListIJ : Int;
 	
-	
-	/** Diversification approach **/
-	var alMaxI : Int;
-	var alMinJ : Int;
-	
 	/**
 	 * Optimization mode 
 	 */
@@ -370,11 +365,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		//Console.OUT.println("listInb "+listInb+ " x "+x+" listI(x) "+listI(x));
 		maxI = listI(x); //This maxI must be local or only returns the value
 		nbSameVar += listInb;
-		
-		// get alternative maxI for communication pourposses
-		x = random.nextInt(listInb);
-		alMaxI = listI(x); // I hope listInb are > 1 
-		
+
 		return maxI;
 	}
 	
@@ -401,31 +392,25 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 	
 	 		while((j = csp.nextJ(maxI, j, 0n)) as UInt < size as UInt) // false if j < 0
 		 	{	
-	 			
+	 			if (nbSwap < mark(j)) {
+	 				continue;
+	 			}
 		 		//Console.OUT.println("swap "+j+"/"+maxI);
 		 		x = csp.costIfSwap(totalCost, j, maxI);
 		 		//Console.OUT.println("swap "+j+"/"+maxI+"  Cost= "+x);
 		 		
 		 		if (solverP.probSelectLocMin <= 100n && j == maxI) continue;
 		 		
-		 		//
 		 		if (x < newCost){
 		 			listJnb = 1n;
 		 			newCost = x;
 		 			lminJ = j;
 		 			
-		 			//For alternative move 
-		 			alMinJ = j;
 		 			
 		 			if (solverP.firstBest) return lminJ;   
 		 		} else if (x == newCost){
 		 			if (random.nextInt(++listJnb) == 0n)
 		 				lminJ = j;
-		 			
-		 			//Select alternative move
-		 			if (random.nextInt(listJnb) == 0n)
-		 				alMinJ = j;
-		 			
 		 		}
 		 	}
 	 	
@@ -447,21 +432,6 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		 	}
 		} while(flagOut);
 	 	//Console.OUT.println("list_J = "+ listJnb);
-		
-		//Chang//
-		//Here communicate alternative vector with some probability
-		/*if (lminJ != alMinJ && solverC.commOption != 0){//if (solverC.commOption != 0){//
-			//Console.OUT.println("lminJ = "+ lminJ+ " alMinJ = "+alMinJ);
-			var altConf : Rail[Int] = new Rail[Int](0..(size-1));
-			Array.copy(csp.variables, altConf);
-			// swap var
-			val aux = altConf(alMinJ);
-			altConf(alMinJ) = altConf(maxI);
-			altConf(maxI) = aux;
-			
-			val res = solverC.communicate( newCost, altConf);
-		}*/
-		
 		return lminJ;
 	}
 	
