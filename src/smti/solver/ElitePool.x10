@@ -34,8 +34,10 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		monitor.atomicBlock(()=>tryInsertVector0(cost,variables,place));		
 	}
 
+	var countInsert:Int = 0n;
 	protected def tryInsertVector0( cost : Int , variables : Rail[Int]{self.size==sz}, place : Int ):Unit {
 		var victim:Int;
+		
 		if( nbEntries < poolSize ){
 			victim = nbEntries++;
 		}else{
@@ -55,6 +57,10 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		if (victim >= 0n) {
 			//Console.OUT.println("insert vector with cost "+cost);	
 			bestPartialSolutions(victim) = new CSPSharedUnit(variables.size, cost, Utils.copy(variables), place);
+			countInsert++;
+			if (countInsert % 10n == 0n){
+				
+			}
 		}
 		
 		return Unit();
@@ -77,7 +83,7 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 	/**
 	 * Get some vector from the best solutions.
 	 */
-	public def getRemoteData():Maybe[CSPSharedUnit(sz)]=
+	public def getRandomConf():Maybe[CSPSharedUnit(sz)]=
 		monitor.atomicBlock(()=> {
 			//if (here.id==0)Console.OUT.println(here+"aqui");
 			if (nbEntries < 1n) return null;
@@ -85,6 +91,20 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 			//if (index >= nbEntries) Console.OUT.println("Golden: index is " + index + " needed to be < " + nbEntries);
 			//if (here.id==0)Console.OUT.println(here+"alli");
 			return new Maybe(bestPartialSolutions(index));
+		});
+	
+	public def getBestConf():Maybe[CSPSharedUnit(sz)]=
+		monitor.atomicBlock(()=> {
+			if (nbEntries < 1n) return null;
+			var bcost:Int = Int.MAX_VALUE;
+			var victim:Long = -1;
+			for (i in 0n..(nbEntries-1n)){
+				if (bestPartialSolutions(i).cost < bcost){
+					bcost = bestPartialSolutions(i).cost;
+					victim = i;
+				}
+			}
+			return new Maybe(bestPartialSolutions(victim));
 		});
 	  
 		

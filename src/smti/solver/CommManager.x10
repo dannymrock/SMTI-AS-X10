@@ -142,14 +142,14 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 			val ss=solvers;
 			
 			if (place == here )
-				a = ep.getRemoteData();
+				a = ep.getRandomConf();
 			else{
-				a = at(place) ss().getPoolData();
+				a = at(place) ss().getRandomConf();
 			}
 			//if (place.id==0)Console.OUT.println(here+" comm to "+place+" and get "+a().cost);
 		}else if (solverMode == USE_ACTIVITIES){
 			Logger.debug(()=>"CommManager: getIPVector solver mode: Act.");
-			a = ep.getRemoteData();
+			a = ep.getRandomConf();
 		}else{
 			a= null;
 			Console.OUT.println("ERROR: Unknown solver mode");
@@ -163,7 +163,7 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	}
 	
 	public def restartPool(){
-		Logger.debug(()=>"CommManager: clear Pool.");
+		Logger.info(()=>"CommManager: clear Pool.");
 		ep.clear();
 	}
 	

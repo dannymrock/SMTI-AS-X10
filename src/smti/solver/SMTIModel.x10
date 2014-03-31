@@ -106,7 +106,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.resetLimit =1n; 
 		solverParams.resetPercent = 0n;
 		solverParams.restartLimit = rLimit;/*30n*length*/; 
-		solverParams.restartMax = 0n;
+		solverParams.restartMax = 10n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
@@ -524,7 +524,7 @@ public class SMTIModel (sz:Long, seed:Long){
 			}else
 				Console.OUT.print(" "+variables(i)+" ");
 		}
-		//Console.OUT.print("\n");
+		Console.OUT.print("\n");
 	}
 	
 	private def printPreferencesTables(){

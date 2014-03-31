@@ -38,7 +38,7 @@ public class Main {
 		    Option("n", "", "nodes_per_team parameter. Default 4."),
 		    Option("k", "", "poolsize."),
 		    Option("y", "", "seed. Default random"),
-		    Option("x", "", "minimum permisible distance."),
+		    Option("d", "", "minimum permisible distance."),
 		    Option("p", "", "path"),
 		    Option("o", "", "output format: machine 0, info 1")
 		    ]);
@@ -55,7 +55,7 @@ public class Main {
 		val nodesPTeam	= opts("-n", 1n);
 		val poolSize	= opts("-k", 4n);
 		val inSeed		= opts("-y", 0);
-		val minDistance	= opts("-x", 0.3);
+		val minDistance	= opts("-d", 0.3);
 		var path:String	= opts("-p", "");
 		val outFormat	= opts("-o", 1n);
 		
@@ -68,7 +68,8 @@ public class Main {
 			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+changeProb+","+
 					intraTIRecv+","+intraTISend+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
 					+","+inSeed+"\n");
-		}else{
+		}
+		else if(outFormat == 1n){
 			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
 							"\nSolverMode: "+(solverMode==0n ?"seq":"parallel")+
 							"\nProbability to Change Vector: "+changeProb+"\nIntra-Team Comm. inteval Recv: "+intraTIRecv+" iterations"+
@@ -92,11 +93,12 @@ public class Main {
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];	
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
 				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, poolSize, nodesPTeam,
-						changeProb) as ParallelSolverI(vectorSz));
+						changeProb, minDistance) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
 			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution,walltime");
-		}else{
+		}
+		else if(outFormat == 1n){
 			Console.OUT.println("| Count | Time (s) |  Iters   | Place  |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS | walltime");
 			Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 		}
@@ -107,7 +109,7 @@ public class Main {
 			solvers().installSolver(solvers);
 		}
 		val intime = totalInTime += System.nanoTime();
-		Logger.info(()=>{"install time: "+ intime/1e9});
+		Logger.debug(()=>{"install time: "+ intime/1e9});
 		
 		// accumulated times
 		var totalExTimes :Long = 0;
@@ -122,14 +124,14 @@ public class Main {
 		
 		
 		// Select files to solve
-		//Logger.info(()=>{"path:"+path});
+		//Logger.debug(()=>{"path:"+path});
 		val fp = new File(path);
 		val execList : Rail[String];
 		if (fp.isDirectory()){
-			Logger.info(()=>{"solving all problems into this directory"});
+			Logger.debug(()=>{"solving all problems into this directory"});
 			execList = fp.list();	
 		}else{
-			//Logger.info(()=>{"Solving "+testNo+" times the problem "+path});
+			//Logger.debug(()=>{"Solving "+testNo+" times the problem "+path});
 			execList = [fp.getName()];
 			path = fp.getParentFile().getPath();
 			//Console.OUT.println(path+" "+fp.getName());
@@ -140,7 +142,7 @@ public class Main {
 		// val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
 		
 		for (file in execList){
-			if(outFormat != 0n){
+			if(outFormat == 1n){
 				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
 				Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
 				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
@@ -153,7 +155,7 @@ public class Main {
 			val fLine = fr.readLine(); //get first line
 			val header = parseFirstLine(fLine);
 			val sizeF = header(0); val p1F = header(1); val p2F = header(2);
-			Logger.info(()=>{"file: "+file+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
+			Logger.debug(()=>{"file: "+file+" size: "+sizeF+" p1: "+p1F+" p2: "+p2F});
 			 		
 			//Load Problem
 			val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](sizeF, (Long) => new Rail[Int](sizeF,0n));
@@ -162,7 +164,7 @@ public class Main {
 			fr.close();
 			val cT= loadTime += System.nanoTime();
 			totalLdTimes += loadTime;
-			Logger.info(()=>{"Time to load the problem="+cT/1e9});
+			Logger.debug(()=>{"Time to load the problem="+cT/1e9});
 			samplesNb++;
 			//solve the problem "testNo" times
 			for (j=1n ; j<=testNo; j++){
@@ -195,13 +197,14 @@ public class Main {
 				extTime += System.nanoTime();
 				val extt = extTime;
 				totalExTimes += extTime;
-				Logger.info(()=>{"ext Time="+extt/1e9});
+				Logger.debug(()=>{"ext Time="+extt/1e9});
 				
 				if(outFormat == 0n){
 					Console.OUT.print(file+",");
 					solvers().printStats(j,outFormat);
 					Console.OUT.println(","+extTime/1e9);
-				}else{
+				}
+				else if (outFormat == 1n){
 					Console.OUT.printf("\r");
 					solvers().printStats(j,outFormat);
 					Console.OUT.printf(" %3.2f \n",extTime/1e9);
@@ -214,13 +217,16 @@ public class Main {
 				}
 				val cltime=clearTime += System.nanoTime();
 				totalClearTimes += clearTime;
-				Logger.info(()=>{" cleartime="+cltime/1e9});
+				Logger.debug(()=>{" cleartime="+cltime/1e9});
 				Logger.debug(()=>" Start broadcatFlat: solvers().clear function ");
+				
+				//System.sleep(1000);
 			}
 			if(outFormat == 0n){
 				Console.OUT.print(file+",");
 				solvers().printAVG(testNo,outFormat);
-			}else{
+			}
+			else if (outFormat == 1n){
 				Console.OUT.printf("\r");
 				Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
 				Console.OUT.println("| Count | Time (s) |  Iters   | Place  |  LocMin  |  Swaps   |  Resets  | Sa/It |ReSta| BP  | Sng | Cng  |  FR |  PS |");
@@ -237,7 +243,8 @@ public class Main {
 		if(outFormat == 0n){
 			Console.OUT.print("TOTAL,");
 			solvers().printGenAVG(samplesNb*testNo,outFormat);
-		}else{
+		}
+		else if (outFormat == 1n){
 			Console.OUT.println("|-------------------------------------------------------------------------------------------------------------------|");
 			Console.OUT.println("\n   General Statistics for "+samplesNb+" problems, each one solved "+testNo+" times ");
 			Console.OUT.println("|-------|----------|----------|--------|----------|----------|----------|-------|-----|-----|-----|------|-----|-----|");
@@ -255,7 +262,8 @@ public class Main {
 		if(outFormat == 0n){
 			Console.OUT.println("Total_Files,Repetition_per_File,Total_Time,AVG_Loading_Time,AVG_external_solving_Time,AVG_clear_Time");
 			Console.OUT.println(samplesNb+","+testNo+","+(totalTime/1e9)+","+(avgld/1e9)+","+(avgext/1e9)+","+(avgclear/1e9));
-		}else
+		}
+		else if (outFormat == 1n)
 			Console.OUT.println("AVG Loading Time= "+(avgld/1e9)+" AVG external solving Time= "+(avgext/1e9)+" AVG clear Time= "+(avgclear/1e9));
 		
 		return;

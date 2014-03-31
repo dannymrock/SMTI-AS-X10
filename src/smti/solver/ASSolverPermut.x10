@@ -47,7 +47,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	
 	/**	Statistics	*/
 	var nbRestart : Int=0n;
-	var nbForceRestart : Int=0n;
+	var nbForceRestart : Int = 0n;
 	var nbIter : Int;
 	var nbReset : Int;
 	var nbSwap : Int;
@@ -63,6 +63,8 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	var nbSameVarTot : Int;
 	var nbLocalMinTot : Int; 
 	
+	var nbInPlateau:Int; 
+	
 	/** For Exhaustive search */
 	var nbListIJ : Int;
 	
@@ -71,6 +73,9 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 */
 	val bestConf = new Rail[Int](size, 0n);
 	var bestCost:Int = x10.lang.Int.MAX_VALUE;
+	
+	var bestOfBest: Int;
+	var bestSent:Boolean=false;
 	
 	//val kill : AtomicBoolean;
 	//var kill:Boolean;
@@ -96,7 +101,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 *  @return the final total cost after solving process (If success returns 0)
 	 */ 
 	public def solve( csp_ : SMTIModel{self.sz==this.sz} ) : Int { //
-		var nbInPlateau:Int; 
+		
 		csp_.setParameters(solverP);
 		
 		//nb_var_to_reset = (((size * solverP.resetPercent) + (100) - 1) / (100));
@@ -132,7 +137,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		
 		totalCost = csp_.costOfSolution(true);
 		//bestCost = totalCost;
-		var bestOfBest: Int = x10.lang.Int.MAX_VALUE ;
+		bestOfBest = x10.lang.Int.MAX_VALUE ;
 		//var slope : Int = 0;
 		//var antcost : Int = totalCost;
 		
@@ -141,7 +146,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		bestCost = totalCost;
 		//Console.OUT.println("initial bestCost="+bestCost);
 		
-		var bestSent:Boolean = false;
+		bestSent = false;
 		
 		while( totalCost != 0n ){
 			// if (bestCost < bestOfBest)
@@ -152,18 +157,10 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 			if (nbIter >= solverP.restartLimit){
 				if(nbRestart < solverP.restartMax){
 					//restart
+					Logger.debug(()=>"ASSolver:Restart");
 					forceRestart = false;
-					csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
 					nbRestart++;
-					restartVar();
-					totalCost = csp_.costOfSolution(true);
-					bestOfBest = x10.lang.Int.MAX_VALUE ;
-					Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
-					bestCost = totalCost;
-					bestSent = false;
-					nbInPlateau = 0n;
-					solver.clear();
-					
+					restartVar(csp_);
 					continue;
 				}
 				//Console.OUT.println("Not solution found");
@@ -192,7 +189,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 			
 			nbInPlateau++;
 			
-			if (minJ == -1n) continue; //What??
+			if (minJ == -1n) continue;
 			
 	 		if (maxI == minJ) {
 	 			//val res = solverC.communicate(totalCost, csp,commRefs);
@@ -262,7 +259,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 			bestSent = false;
 	 		}
 	 		
-	 		if( solver.intraTIRecv() != 0n && nbIter % solver.intraTIRecv() == 0n){        //here.id as Int ){
+	 		if( solver.intraTISend() != 0n && nbIter % solver.intraTISend() == 0n){        //here.id as Int ){
 	 			if(!bestSent){ 
 	 				solver.communicate( bestCost, bestConf as Valuation(sz));
 	 				bestSent = true;
@@ -286,10 +283,10 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 			//restart
 	 			Logger.debug(()=>"   ASSolverPermut : force Restart");
 	 			forceRestart = false;
-	 			nbIter = solverP.restartLimit;
+	 			//nbIter = solverP.restartLimit;
 	 			//csp_.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
 	 			nbForceRestart++;
-	 			// restartVar();
+	 			restartVar(csp_);
 	 			// totalCost = csp_.costOfSolution(true);
 	 			// bestOfBest = x10.lang.Int.MAX_VALUE ;
 	 			// nbInPlateau = 0n;
@@ -565,10 +562,22 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	}
 	
 	public def forceRestart(){
+		Logger.info(()=>"ASSolverPermut: Force Restart True");
 		forceRestart = true;
 	}
 	
-	public def restartVar(){
+	public def restartVar(csp : SMTIModel){
+		Logger.info(()=>"ASSolver Permut: Restart");
+		csp.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
+		totalCost = csp.costOfSolution(true);
+		bestOfBest = x10.lang.Int.MAX_VALUE ;
+		Rail.copy(csp.getVariables(),bestConf as Valuation(sz));
+		bestCost = totalCost;
+		bestSent = false;
+		nbInPlateau = 0n;
+		solver.clear();
+		
+		
 		mark.clear();
 		//nbRestart++;			
 		//Update Total statistics
@@ -583,8 +592,6 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		nbSameVar = 0n;
 		nbLocalMin = 0n;
 		nbReset = 0n;
-		
-		
 	}
 }
 public type ASSolverPermut(s:Long)=ASSolverPermut{self.sz==s};

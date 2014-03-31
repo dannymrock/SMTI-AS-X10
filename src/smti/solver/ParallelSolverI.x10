@@ -71,9 +71,9 @@ public interface ParallelSolverI {
     def setStats(co : Int, p : Int, e : Int, t:Double, it:Int, loc:Int, sw:Int, re:Int, sa:Int, rs:Int, ch:Int,
             fr : Int, bp:Int, sg:Int):void;
 
-    def getPoolData():Maybe[CSPSharedUnit(sz)];
+    def getRandomConf():Maybe[CSPSharedUnit(sz)];
     
-    def getCurrentData():Maybe[CSPSharedUnit(sz)];
+    def getBestConf():Maybe[CSPSharedUnit(sz)];
 
     def accStats(CSPStats):void;
     def printStats(count:Int, oF:Int):void;
@@ -90,6 +90,8 @@ public interface ParallelSolverI {
 
  	def printGenAVG(count:Int, oF:Int):void ;
  	def clearSample():void;
+ 	
+ 	def forceRestart():void;
 
 }
 public type ParallelSolverI(s:Long)=ParallelSolverI{self.sz==s};
