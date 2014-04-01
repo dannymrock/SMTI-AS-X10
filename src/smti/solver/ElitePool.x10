@@ -34,7 +34,7 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		monitor.atomicBlock(()=>tryInsertVector0(cost,variables,place));		
 	}
 
-	var countInsert:Int = 0n;
+	//var countInsert:Int = 0n;
 	protected def tryInsertVector0( cost : Int , variables : Rail[Int]{self.size==sz}, place : Int ):Unit {
 		var victim:Int;
 		
@@ -57,10 +57,10 @@ public class ElitePool(sz:Long, poolSize:Int/*, seed:Long*/) {
 		if (victim >= 0n) {
 			//Console.OUT.println("insert vector with cost "+cost);	
 			bestPartialSolutions(victim) = new CSPSharedUnit(variables.size, cost, Utils.copy(variables), place);
-			countInsert++;
-			if (countInsert % 10n == 0n){
-				
-			}
+			// countInsert++;
+			// if (countInsert % 10n == 0n){
+			// 	
+			// }
 		}
 		
 		return Unit();

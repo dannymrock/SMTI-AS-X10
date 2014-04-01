@@ -125,7 +125,11 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	// verify if inter team comm is able, if the number of teams is greater than 1 and 
     	//        if place(here) is a head node 
     	if (interTeamInterval > 0 && nTeams > 1n && here.id < nTeams){
-    		async interTeamActivity(st, random.nextLong()); 
+    		val delay = random.nextLong(interTeamInterval);
+    		async{
+    			System.sleep(delay);
+    			interTeamActivity(st, random.nextLong());
+    		} 
     	}
     	
     	
@@ -151,6 +155,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		if (winner) {
     			interTeamKill = true;
     			setStats_(solvers);
+    			Console.OUT.println("\nerrors "+ err);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
     			//csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
@@ -296,17 +301,19 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		}
 	}
 	
-	
+	var err:Int=0n;
 	/**
 	 * Inter Team Communication Functions
 	 **/
 	public def interTeamActivity(st:PlaceLocalHandle[ParallelSolverI(sz)], seed:Long){
 		while (!interTeamKill) {
-			//if (!System.sleep(interTeamInterval)){ 
-				//Logger.debug(()=>"interTeamActivity error: cannot execute sleep");
-				//continue;
-			//}
-			while(commM.ep.countInsert % 10n != 0n);
+			if (!System.sleep(interTeamInterval)){ 
+				//Logger.info(()=>"interTeamActivity error: cannot execute sleep");
+				//Console.OUT.println(here+" interTeamActivity error: cannot execute sleep");
+				err++;
+				continue;
+			}
+			//while(commM.ep.countInsert % 10n != 0n);
 			
 			//Runtime.probe();		// Give a chance to the other activities
 			// woken up

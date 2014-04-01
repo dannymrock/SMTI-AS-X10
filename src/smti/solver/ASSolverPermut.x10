@@ -568,7 +568,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	
 	public def restartVar(csp : SMTIModel){
 		Logger.info(()=>"ASSolver Permut: Restart");
-		csp.initialize(solverP.baseValue); //Set_Init_Configuration Random Permut
+		csp.initialize(solverP.baseValue); // Random Permut
 		totalCost = csp.costOfSolution(true);
 		bestOfBest = x10.lang.Int.MAX_VALUE ;
 		Rail.copy(csp.getVariables(),bestConf as Valuation(sz));

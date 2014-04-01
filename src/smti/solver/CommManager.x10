@@ -76,6 +76,8 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 		Logger.debug(()=>{(s==0n ? ("My team is: " + m):("My team is:"+here.id))});
 		//Console.OUT.println(s==0n ? ("My team is: " + m):("My team is:"+here.id));
 		this.changeProb = changeProb;
+		
+		//ep.setSolvers(ss);
 	}
 	
 	public def setSeed(seed:Long){
@@ -96,11 +98,12 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	public def communicate(totalCost : Int, variables : Rail[Int]{self.size==sz} ) {
 		Logger.debug(()=>" communicate: entering.");
 	    val placeid = here.id as Int;
+	    val ss = solvers;
 	    if (solverMode == USE_PLACES) {
 	    	/************************** Comm Places *******************************/
 	    	//Console.OUT.println("Solver Mode USE_PLACES, communication interval= "+commI);
 	    	Logger.debug(()=>"CommManager: solver mode -> Places.");
-	    	val ss = solvers;
+	    	
 	    	//val variables = csp.variables; 
 	    	
 	    	if (Place(myTeamId)==here){
@@ -163,7 +166,7 @@ public class CommManager(sz:Long, poolSize:Int/*, seed:Long*/) {
 	}
 	
 	public def restartPool(){
-		Logger.info(()=>"CommManager: clear Pool.");
+		Logger.debug(()=>"CommManager: clear Pool.");
 		ep.clear();
 	}
 	
