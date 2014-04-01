@@ -1,5 +1,9 @@
 # Makefile
-.PRECIOUS: %.cc %.h
+.PRECIOUS: %.cc %.h %.d
+SUFFIXES += .d .cc .x10
+
+#We don't need to clean up when we're making these targets
+NODEPS=rsync clean
 
 #RT=sockets
 RT=mpi
@@ -7,46 +11,33 @@ RT=mpi
 
 PROJECT=smti
 
-SOURCES=smti/util/Unit.x10 \
-smti/util/Utils.x10 \
-smti/util/Monitor.x10 \
-smti/util/RandomTools.x10 \
-smti/util/Logger.x10 \
-smti/solver/Main.x10 \
-smti/solver/CSPStats.x10 \
-smti/solver/PairAS.x10 \
-smti/solver/ElitePool.x10 \
-smti/solver/ASSolverParameters.x10 \
-smti/solver/SMTIModel.x10 \
-smti/solver/ParallelSolverI.x10 \
-smti/solver/ASSolverPermut.x10 \
-smti/solver/CommManager.x10 \
-smti/solver/CSPSharedUnit.x10 \
-smti/solver/Maybe.x10 \
-smti/solver/PlacesMultiWalks.x10
+SOURCES_X10=$(shell find $(PROJECT)/ -name "*.x10")
+SOURCES_CPP=$(SOURCES_X10:.x10=.cc)
+DEPFILES=$(SOURCES_CPP:.cc=.d)
+OBJS=$(SOURCES_CPP:.cc=.o)
 
-OBJS=$(SOURCES:.x10=.o)
 
 
 X10_FLAGS=-NO_CHECKS -O -x10rt $(RT)
 
 ifeq ($(RT),sockets)
   CXX=g++
-  CFLAGS_RT=-DTRANSPORT=sockets
+  CXXFLAGS_RT=-DTRANSPORT=sockets
 else
   CXX=mpicxx
-  CFLAGS_RT=-DNO_TRACING 
+  CXXFLAGS_RT=-DNO_TRACING 
 endif
 
 
+CXX_X10_INCLUDE=-I${X10_HOME}/include -I${X10_HOME}/stdlib/include
 
-CFLAGS_DEFS=-Wno-long-long -Wno-unused-parameter -DHOMOGENEOUS -DX10_USE_BDWGC -pthread -I. -I${X10_HOME}/include -I${X10_HOME}/stdlib/include -I. $(CFLAGS_RT)
+CXXFLAGS_DEFS=-Wno-long-long -Wno-unused-parameter -DHOMOGENEOUS -DX10_USE_BDWGC -pthread $(CXX_X10_INCLUDE) -I. $(CXXFLAGS_RT)
 
 
-CFLAGS_OPT=-O2 -DNO_CHECKS -finline-functions 
-#CFLAGS_OPT=-O3 -DNO_CHECKS -finline-functions -fomit-frame-pointer 
-#CFLAGS_OPT=-g -Wno-unused-variable -Wno-unused-but-set-variable -Wall
-CFLAGS=$(CFLAGS_DEFS) $(CFLAGS_OPT)
+CXXFLAGS_OPT=-O2 -DNO_CHECKS -finline-functions 
+#CXXFLAGS_OPT=-O3 -DNO_CHECKS -finline-functions -fomit-frame-pointer 
+#CXXFLAGS_OPT=-g -Wno-unused-variable -Wno-unused-but-set-variable -Wall
+CXXFLAGS=$(CXXFLAGS_DEFS) $(CXXFLAGS_OPT)
 
 LDFLAGS=-Wl,--no-as-needed -pthread
 
@@ -67,13 +58,27 @@ compile:
 	rsync -ca src_tmp/$(PROJECT) .
 
 
+
+#Don't create dependencies when we're cleaning, for instance
+ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
+    #Chances are, these files don't exist.  GMake will create them and
+    #clean up automatically afterwards
+    -include $(DEPFILES)
+endif
+
+# some .x10 files do not produce .cc output (type defs). 
+# (in that case src_tmp is not created). Create an empty .cc file
 %.cc: %.x10
 	@rm -rf src_tmp
 	x10c++ $(X10_FLAGS) -commandlineonly -c -d src_tmp $<
-	rsync -ca src_tmp/$(PROJECT) .
+	@if [ -d src_tmp ]; then rsync -ca src_tmp/$(PROJECT) .; else touch $@; fi
 
-%.o: %.cc
-	$(CXX) $(CFLAGS) -c $< -o $@
+# do not pass -I for x10 includes else they are added by -MM in the .d files
+%.d: %.cc
+	g++ -I. -MM -MF $@ $<
+
+%.o: %.cc %.d
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 
 xxx_main_xxx.cc:
@@ -88,15 +93,5 @@ Main: $(OBJS) xxx_main_xxx.o
 
 
 clean:
-	rm -rf Main *.o *.h *.cc *.inc *~ src_tmp
-	find $(PROJECT) \( -name '*.cc' -o -name '*.h' -o -name '*.o' \) -exec rm \{} \;
-
-smti/solver/Main.x10: smti/util/Logger.x10 smti/solver/ParallelSolverI.x10 smti/solver/PlacesMultiWalks.x10 smti/solver/SMTIModel.x10 smti/solver/Valuation.x10
-smti/solver/ParallelSolverI.x10: smti/solver/SMTIModel.x10 smti/solver/Valuation.x10 smti/solver/CSPSharedUnit.x10 smti/solver/CSPStats.x10
-smti/solver/PlacesMultiWalks.x10: smti/util/Logger.x10 smti/solver/ParallelSolverI.x10 smti/solver/SMTIModel.x10 smti/solver/ASSolverPermut.x10 smti/solver/CSPStats.x10 smti/solver/CommManager.x10 smti/solver/Maybe.x10  smti/solver/CSPSharedUnit.x10 smti/solver/Valuation.x10
-smti/solver/SMTIModel.x10: smti/util/Logger.x10 smti/util/RandomTools.x10 smti/solver/ASSolverParameters.x10 smti/solver/Valuation.x10
-smti/solver/ASSolverPermut.x10: smti/util/Logger.x10 smti/solver/ASSolverParameters.x10 smti/solver/SMTIModel.x10 smti/solver/ParallelSolverI.x10 smti/solver/Valuation.x10
-smti/solver/CommManager.x10: smti/util/Logger.x10 smti/solver/ElitePool.x10 smti/solver/ParallelSolverI.x10
-smti/solver/CSPStats.x10: smti/util/Monitor.x10
-smti/solver/ElitePool.x10: smti/util/Logger.x10 smti/util/Monitor.x10 smti/util/Unit.x10 smti/util/Utils.x10 smti/solver/CSPSharedUnit.x10 smti/solver/Maybe.x10 
-
+	rm -rf Main xxx_main_xxx.cc *.inc *~ src_tmp
+	find $(PROJECT) \( -name '*.cc' -o -name '*.h' -o -name '*.o' -o -name '*.d' \) -exec rm \{} \;

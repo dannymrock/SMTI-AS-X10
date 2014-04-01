@@ -35,11 +35,11 @@ public class SMTIModel (sz:Long, seed:Long){
     val errV = new Rail[Int](length,-1n);
     /** bpi:Blocking par indexes (index man - value bp index to swap)**/
     val bpi = new Rail[Int](length,-1n);
-    /** singV: array that contains all the indexes of the single men **/
-    val singV = new Rail[Int](length,0n);
+    
     /** weight: weight to compute the total cost (cost = bp*weight + singles)**/
     var weight:Int = length;
     
+   var singlei:Int = 0n;
     
 	public def this (lengthProblem : Long , seed : Long, mPrefs:Rail[Rail[Int]], wPrefs:Rail[Rail[Int]], 
 			restLimit:Int){
@@ -131,20 +131,21 @@ public class SMTIModel (sz:Long, seed:Long){
 		var err:Int ;
 		val lvC = revpW(wi)(pwi);
 		val lvD = revpW(wi)(mi);     
-		if (lvC == 0n){
+        if (lvD == 0n){
+           // m is not present in the preferences of w
+           err = 0n;
+        }else if (lvC == 0n){
             //current assignment of w (pw) is invalid, not present in Wprefs 
 			//err = length;
 			err = 1n;
-		}else if (lvD == 0n){
-            // m is not present in the preferences of w
-			err = 0n;
-		}else{
+		}else {
 			err = lvC - lvD;	// computing distance between current and desired assignment
-			err = err > 0n ? err + 1n : err;
+			//err = err > 0n ? err + 1n : err;
+			/* if err > 0 (m,w) is a BP (blocking pair) */
+			// if (err < 0) err  =0;
+		
 		}
 		
-		if (err < 0n)		/* if err > 0 (m,w) is a BP (blocking pair) */
-			err = 0n;
 		
 		//Console.OUT.println("bpE in w "+w+", pw "+pw+", m "+m +" = "+err);
 		return err;
@@ -186,10 +187,10 @@ public class SMTIModel (sz:Long, seed:Long){
         	 
         	if(levelPM == 0n ){ //verify if m-pm is single (have a not valid match)
         		levelPM = length;
-        		if (shouldBeRecorded){
-        			singV(singles) = mi as Int;
-        		}
         		singles++;
+        		if (shouldBeRecorded && random.randomInt(singles) == 0n){
+        			singlei = mi as Int;
+        		}
         	}
         	 
         	var levelW:Int = 0n;
@@ -322,10 +323,9 @@ public class SMTIModel (sz:Long, seed:Long){
 				swapVariables(i, j);
 			}
 		}else{			
-			val i = random.randomInt(nbSingles);
 			val j = random.randomInt(length);
 			///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
-			swapVariables(singV(i), j);			
+			swapVariables(singlei, j);			
 		}
 		
 		//2nd SINGLES
