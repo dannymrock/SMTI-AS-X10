@@ -92,6 +92,9 @@ public interface ParallelSolverI {
  	def clearSample():void;
  	
  	def forceRestart():void;
+ 	//def interTeamComm(ss:PlaceLocalHandle[ParallelSolverI(sz)], seed:Long):void;
+ 	//def interTeamActivity(st:PlaceLocalHandle[ParallelSolverI(sz)], seed:Long):void;
 
+ 	
 }
 public type ParallelSolverI(s:Long)=ParallelSolverI{self.sz==s};

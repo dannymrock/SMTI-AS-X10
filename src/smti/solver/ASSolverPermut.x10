@@ -134,6 +134,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		nbSwapTot = 0n;
 		nbSameVarTot = 0n;
 		nbLocalMinTot = 0n; 
+		nbForceRestart = 0n;
 		
 		totalCost = csp_.costOfSolution(true);
 		//bestCost = totalCost;
@@ -226,7 +227,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 				mark(maxI) = nbSwap + solverP.freezeSwap; //Mark(maxI, ad.freeze_swap);
 				mark(minJ) = nbSwap + solverP.freezeSwap; //Mark(minJ, ad.freeze_swap);
 			
-				csp_.swapVariables(maxI, minJ);//adSwap(maxI, minJ,csp);
+				csp_.swapVariables(maxI, minJ); //adSwap(maxI, minJ,csp);
 				nbSwap++;
 				csp_.executedSwap(maxI, minJ);
 				totalCost = newCost;

@@ -125,12 +125,12 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	// verify if inter team comm is able, if the number of teams is greater than 1 and 
     	//        if place(here) is a head node 
     	if (interTeamInterval > 0 && nTeams > 1n && here.id < nTeams){
-    		val delay = random.nextLong(interTeamInterval);
-    		async{
-    			System.sleep(delay);
-    			interTeamActivity(st, random.nextLong());
-    		} 
-    	}
+    	// 	val delay = random.nextLong(interTeamInterval);
+    	 	async{
+    	// 		System.sleep(delay);
+    	 		interTeamActivity(st, random.nextLong());
+    	 	} 
+    	 }
     	
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem
@@ -155,7 +155,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		if (winner) {
     			interTeamKill = true;
     			setStats_(solvers);
-    			Console.OUT.println("\nerrors "+ err);
+    			//Console.OUT.println("\nerrors "+ err);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
     			//csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
@@ -301,16 +301,18 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		}
 	}
 	
-	var err:Int=0n;
+	//var err:Int=0n;
 	/**
 	 * Inter Team Communication Functions
 	 **/
 	public def interTeamActivity(st:PlaceLocalHandle[ParallelSolverI(sz)], seed:Long){
 		while (!interTeamKill) {
+			//Console.OUT.println(" interTeamInterval: "+ interTeamInterval);
+			
 			if (!System.sleep(interTeamInterval)){ 
 				//Logger.info(()=>"interTeamActivity error: cannot execute sleep");
-				//Console.OUT.println(here+" interTeamActivity error: cannot execute sleep");
-				err++;
+				Console.OUT.println(here+" interTeamActivity error: cannot execute sleep");
+				//err++;
 				continue;
 			}
 			//while(commM.ep.countInsert % 10n != 0n);
@@ -367,9 +369,9 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
 		var count : Int = 0n;
 		for (i in 0n..(sz as Int - 1n)){
 			//Logger.debug("comparing: "+conf1(i)+" - "+conf2(i));
-			if(conf1(i) == conf2(i)) count++; 
+			if(conf1(i) != conf2(i)) count++; 
 		}
-		val dis = 1.0 - ( count as Double / sz );
+		val dis = count as Double / sz ;
 		return dis;
 	} 
 	

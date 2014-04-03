@@ -44,17 +44,19 @@ LDFLAGS=-Wl,--no-as-needed -pthread
 LIBS=-L${X10_HOME}/stdlib/lib -lx10 -lgc -lm -lpthread -lrt -ldl -L${X10_HOME}/lib -lx10rt_$(RT) -Wl,--rpath -Wl,${X10_HOME}/stdlib/lib -Wl,--rpath -Wl,${X10_HOME}/lib -Wl,-export-dynamic
 
 
-inc: rsync Main
+inc: rsync
+	$(MAKE) Main
 
-full: rsync compile Main
+full: rsync
+	$(MAKE) compile Main
 
 rsync:
 	rsync -a danny@cri-hpc1.univ-paris1.fr:workspace/SMTI-files/src/$(PROJECT) .
 
 compile: 
-	echo sources $(SOURCES)
+	echo sources $(SOURCES_X10)
 	@rm -rf src_tmp
-	x10c++ $(X10_FLAGS) -commandlineonly -c -d src_tmp $(SOURCES)
+	x10c++ $(X10_FLAGS) -commandlineonly -c -d src_tmp $(SOURCES_X10)
 	rsync -ca src_tmp/$(PROJECT) .
 
 

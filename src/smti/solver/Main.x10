@@ -175,9 +175,8 @@ public class Main {
 				if (solverMode == 0n){
 					finish for (p in Place.places()) {
 						val solverSeed = random.nextLong();	
-						at (p) async{
-							solvers().solve(solvers, cspGen, solverSeed);
-						}	
+						at (p) async
+							solvers().solve(solvers, cspGen, solverSeed);	
 					}
 				}else{
 					finish for(var i:Long=Place.MAX_PLACES-1; i>=0; i-=16) at	(Place(i)) async {
