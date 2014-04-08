@@ -3,7 +3,7 @@
 SUFFIXES += .d .cc .x10
 
 #We don't need to clean up when we're making these targets
-NODEPS=rsync clean
+NODEPS=inc full rsync clean
 
 #RT=sockets
 RT=mpi
@@ -51,7 +51,7 @@ full: rsync
 	$(MAKE) compile Main
 
 rsync:
-	rsync -a danny@cri-hpc1.univ-paris1.fr:workspace/SMTI-files/src/$(PROJECT) .
+	rsync -av danny@cri-hpc1.univ-paris1.fr:workspace/SMTI-files/src/$(PROJECT) .
 
 compile: 
 	echo sources $(SOURCES_X10)
@@ -62,10 +62,12 @@ compile:
 
 
 #Don't create dependencies when we're cleaning, for instance
+ifdef MAKECMDGOALS
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
     #Chances are, these files don't exist.  GMake will create them and
     #clean up automatically afterwards
     -include $(DEPFILES)
+endif
 endif
 
 # some .x10 files do not produce .cc output (type defs). 

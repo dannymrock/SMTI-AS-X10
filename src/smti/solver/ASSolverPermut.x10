@@ -358,10 +358,13 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 				listI(listInb++) = i; 
 			}
 		}
-		
-		x = random.nextInt(listInb);
-		//Console.OUT.println("listInb "+listInb+ " x "+x+" listI(x) "+listI(x));
-		maxI = listI(x); //This maxI must be local or only returns the value
+		if (listInb == 0n) // all variables are OK but the global cost is > 0 (can occur in SMTI with no BP but singles)
+			maxI = random.nextInt(size);
+		else {
+		    x = random.nextInt(listInb);
+		    //Console.OUT.println("listInb "+listInb+ " x "+x+" listI(x) "+listI(x));
+		    maxI = listI(x); //This maxI must be local or only returns the value
+		}
 		nbSameVar += listInb;
 
 		return maxI;
