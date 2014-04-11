@@ -298,7 +298,7 @@ public class SMTIModel (sz:Long, seed:Long){
 	}
 	
 	public def reset ( var n : Int, totalCost : Int ) : Int {			
-		
+		 
 		// 1st BLOCKING PAIRS
 		if (nbBP > 0n){
 			var maxi:Int = findMax(-1n, -1n);	/* find max */

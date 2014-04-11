@@ -52,12 +52,13 @@ full: rsync
 
 rsync:
 	rsync -av danny@cri-hpc1.univ-paris1.fr:workspace/SMTI-files/src/$(PROJECT) .
+	rm -rf /tmp/src_x10_*
 
 compile: 
-	echo sources $(SOURCES_X10)
-	@rm -rf src_tmp
-	x10c++ $(X10_FLAGS) -commandlineonly -c -d src_tmp $(SOURCES_X10)
-	rsync -ca src_tmp/$(PROJECT) .
+	@echo sources $(SOURCES_X10)
+	export tmp=`mktemp -d --tmpdir=/tmp 'src_x10_XXXXXX'`; \
+	x10c++ $(X10_FLAGS) -commandlineonly -c -d $$tmp $(SOURCES_X10) && \
+	rsync -cva $$tmp/$(PROJECT) .
 
 
 
@@ -71,18 +72,19 @@ endif
 endif
 
 # some .x10 files do not produce .cc output (type defs). 
-# (in that case src_tmp is not created). Create an empty .cc file
+# in that case create an empty .cc file
 %.cc: %.x10
-	@rm -rf src_tmp
-	x10c++ $(X10_FLAGS) -commandlineonly -c -d src_tmp $<
-	@if [ -d src_tmp ]; then rsync -ca src_tmp/$(PROJECT) .; else touch $@; fi
+	export tmp=`mktemp -d --tmpdir=/tmp 'src_x10_XXXXXX'`; \
+	x10c++ $(X10_FLAGS) -commandlineonly -c -d $$tmp $< && \
+	if [ -f $$tmp/$@ ]; then rsync -cva $$tmp/$(PROJECT) .; else touch $@; fi
 
 # do not pass -I for x10 includes else they are added by -MM in the .d files
 %.d: %.cc
-	g++ -I. -MM -MF $@ $<
+	g++ -I. -MM -MF $@ -MT $(@D)/`basename $@ .d`.o  $<
 
 %.o: %.cc %.d
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 
 
 xxx_main_xxx.cc:
@@ -97,5 +99,5 @@ Main: $(OBJS) xxx_main_xxx.o
 
 
 clean:
-	rm -rf Main xxx_main_xxx.cc *.inc *~ src_tmp
+	rm -rf Main xxx_main_xxx.cc *.inc *~ /tmp/src_x10_*
 	find $(PROJECT) \( -name '*.cc' -o -name '*.h' -o -name '*.o' -o -name '*.d' \) -exec rm \{} \;

@@ -575,7 +575,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		csp.initialize(solverP.baseValue); // Random Permut
 		totalCost = csp.costOfSolution(true);
 		bestOfBest = x10.lang.Int.MAX_VALUE ;
-		Rail.copy(csp.getVariables(),bestConf as Valuation(sz));
+		Rail.copy(csp.getVariables() as Valuation(sz),bestConf as Valuation(sz));
 		bestCost = totalCost;
 		bestSent = false;
 		nbInPlateau = 0n;
