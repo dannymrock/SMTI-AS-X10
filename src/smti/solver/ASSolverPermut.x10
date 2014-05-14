@@ -15,9 +15,13 @@ import x10.util.concurrent.AtomicBoolean;
  * 				 April 12, 2013 -> Exahustive search implemented
  * 	
  */
+// param t target 
+// param b beat flag
+public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int, b:Boolean) {
 
-public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
-
+	val target = t;
+	val beat = b;
+	
     val mark = new Rail[Int] (size, 0n); 
 	val solverP = new ASSolverParameters();
 
@@ -252,12 +256,16 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 	 		/**
 	 		 *  optimization
 	 		 */
-	 		
-	 
+	 		// Console.OUT.println("totalCost = "+totalCost);
 	 		if(totalCost <= bestCost){
 	 			Rail.copy(csp_.getVariables(),bestConf as Valuation(sz));
 	 			bestCost = totalCost;
 	 			bestSent = false;
+	 
+	            // Compare cost and break if target is accomplished
+	 			if ((beat && bestCost < target)||(!beat && bestCost <= target)){
+	 				break;
+	 			}
 	 		}
 	 		
 	 		if( solver.intraTISend() != 0n && nbIter % solver.intraTISend() == 0n){        //here.id as Int ){
@@ -306,7 +314,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz)) {
 		nbLocalMinTot += nbLocalMin; 
 		
 		//csp_.displaySolution();
-		Logger.debug(()=>{"   ASSolverPermut: Finish search with cost: "+bestCost+" kill="+kill });
+		Logger.info(()=>{"   ASSolverPermut: Finish search with cost: "+bestCost+" kill="+kill });
 		
 		if (bestCost == 0n){
 			Logger.debug(()=>{"perfect marriage found "});

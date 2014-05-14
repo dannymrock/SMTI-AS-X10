@@ -40,6 +40,7 @@ public class Main {
 		    Option("y", "", "seed. Default random"),
 		    Option("d", "", "minimum permisible distance."),
 		    Option("p", "", "path"),
+		    Option("t", "", "target default 0"),
 		    Option("o", "", "output format: machine 0, info 1")
 		    ]);
 		
@@ -58,10 +59,13 @@ public class Main {
 		val minDistance	= opts("-d", 0.3);
 		var path:String	= opts("-p", "");
 		val outFormat	= opts("-o", 1n);
+        val target	    = opts("-t", 0n);
 		
 		var vectorSize:Long=0;
 		
 		//at(Main.param) Main.param().poolSize = poolSize;
+		
+		Console.OUT.println("Target: "+(target >= 0n ? "to get equal":"to exceed")+" cost = "+ Math.abs(target));
 		
 		if (outFormat == 0n){
 			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team Recv,intra-Team Send,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
@@ -93,7 +97,7 @@ public class Main {
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];	
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
 				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, poolSize, nodesPTeam,
-						changeProb, minDistance) as ParallelSolverI(vectorSz));
+						changeProb, minDistance, target) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
 			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution,walltime");

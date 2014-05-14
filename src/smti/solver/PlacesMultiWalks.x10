@@ -65,11 +65,15 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     var interTeamKill:Boolean = false;
     val interTeamInterval:Long;
     val minDistance:Double;
+    
+    
+    val target:Int;
+    val beat:Boolean;
     /**
      * 	Constructor of the class
      */
     public def this(vectorSize:Long, intraTIRecv : Int, intraTISend : Int, interTI : Long, ps : Int,
-    		npT : Int, changeProb:Int, minDistance:Double){
+    		npT : Int, changeProb:Int, minDistance:Double, target:Int){
     	property(vectorSize,ps);
     	this.intraTIRecv = intraTIRecv;
     	this.intraTISend = intraTISend;
@@ -79,6 +83,15 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	this.changeProb = changeProb;
     	interTeamInterval = interTI;
     	this.minDistance = minDistance;
+    	
+    	if(target < 0n){
+    		beat = true;
+    		this.target = target * -1n; 
+    	}else{
+    		beat=false;
+            this.target = target;
+    	}
+    	
     }
     //var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
     
@@ -91,7 +104,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val ss = st() as ParallelSolverI(sz);
     	val size = sz as Int;
     	var nsize:Int = size;
-    	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss);
+    	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss, target, beat);
     	commM = new CommManager(sz, 0n , st, intraTIRecv, intraTISend ,0n, poolSize, nTeams, changeProb);
     }
     	
@@ -134,7 +147,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	
     	
     	csp_ = cspGen(); // use the supplied generator to generate the problem
-    	    	
+    	
     	Logger.debug(()=>"  PlacesMultiWalks: Start solve process: solver.solve() function ");
     	
     	time = -System.nanoTime();
@@ -142,11 +155,10 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	time += System.nanoTime();
     	
     	// Logger.debug(()=>"  PlacesMultiWalks: end solve process: solver.solve() function ");
-    	if (cost == 0n){ //TODO: Define a new condition (It's possible to finish without cost=0)
+    	if ((beat && cost < target)||(!beat && cost <= target)){ //TODO: Define a new condition (It's possible to finish without cost=0)
     		// A solution has been found! Huzzah! 
     		// Light the candles! Kill the blighters!
     		val home = here.id;
-    		
     		val winner = at(Place.FIRST_PLACE) solvers().announceWinner(solvers, home);
     		
     		//winPlace = here;
@@ -157,7 +169,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     			setStats_(solvers);
     			//Console.OUT.println("\nerrors "+ err);
     			//Utils.show("Solution is " + (csp_.verified()? "ok" : "WRONG") , csp_.variables);
-    			//csp_.displaySolution2(solver.bestConf as Valuation(sz));
+    			csp_.displaySolution2(solver.bestConf as Valuation(sz));
     			//Console.OUT.println("Solution is " + (csp_.verified(solver.bestConf as Valuation(sz))? "perfect" : "not perfect"));
     			csp_.verify(solver.bestConf as Valuation(sz));
     		}

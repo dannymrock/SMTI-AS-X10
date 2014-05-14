@@ -108,7 +108,7 @@ public class SMTIModel (sz:Long, seed:Long){
 		solverParams.resetLimit =1n; 
 		solverParams.resetPercent = 0n;
 		solverParams.restartLimit = rLimit;/*30n*length*/; 
-		solverParams.restartMax = 10n;
+		solverParams.restartMax = 0n;
 		solverParams.baseValue = 1n;
 		solverParams.exhaustive = false;
 		solverParams.firstBest = true;
@@ -326,71 +326,6 @@ public class SMTIModel (sz:Long, seed:Long){
 		return -1n;
 
 	}
-	
-	public def resetOld ( var n : Int, totalCost : Int ) : Int {			
-		 		
-		// 1st BLOCKING PAIRS
-		if (nbBP > 0n){
-			var maxi:Int = findMax(-1n, -1n);	/* find max */
-			var bpiMaxi:Int = bpi(maxi);
-			var otheri:Int; 
-			///Console.OUT.println("Reset maxi= "+maxi+" bpiMaxi = "+ bpiMaxi);
-			swapVariables(maxi, bpiMaxi);
-		 	if (nbBP > 1n && random.randomDouble() < 0.98 &&  (otheri = findMax(maxi,bpiMaxi)) >= 0n){
-		 		///Console.OUT.println("Reset otheri= "+otheri+" bpi(otheri) = "+ bpi(otheri));
-				swapVariables(otheri, bpi(otheri));
-			}else {
-				val i = random.randomInt(length);
-				val j = random.randomInt(length);
-				///Console.OUT.println("Reset no 2nd BP i= "+i+" j = "+ j);
-				swapVariables(i, j);
-			}
-		}else{			
-			//val i = random.randomInt(nbSingles);
-			
-			val j = random.randomInt(length);
-			///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
-			swapVariables(singlei, j);		
-			//swapVariables(singV(i), j);
-		}
-		
-		//2nd SINGLES
-		// if(nbSingles >= 2n){
-		// 	val i = r.randomInt(nbSingles);
-		// 	val j = r.randomInt(nbSingles);
-		// 	///Console.OUT.println("Reset out single singV(i)= "+singV(i)+"singV(j) = "+ singV(j)+"  nbSingles="+nbSingles);
-		// 	swapVariables(singV(i), singV(i));
-		//  } else if(nbSingles < 2n){
-		// 	val j = r.randomInt(length);
-		// 	///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
-		// 	swapVariables(singV(0), j);
-		// }
-		
-		// if(nbSingles > 0n){
-		// 	val i = r.randomInt(nbSingles);
-		// 	val j = r.randomInt(length);
-		// 	///Console.OUT.println("Reset single singV(0)= "+singV(0)+" random j = "+ j+"  nbSingles="+nbSingles);
-		// 	swapVariables(singV(i), j);
-		// }
-
-		// // 3rd RANDOMNESS
-		// if(r.randomDouble() < 0.05){ // size 100 -> 1   size 1000 -> 0.1
-		// 	val i = r.randomInt(length);
-		// 	val j = r.randomInt(length);
-		// 	Console.OUT.println("Reset out i= "+i+" j = "+ j);
-		// 	swapVariables(i, j);
-		// }
-		
-		// if(r.randomDouble() < (100.0 / length)){ // size 100 -> 1   size 1000 -> 0.1
-		// 	val i = r.randomInt(length);
-		// 	val j = r.randomInt(length);
-		// 	//Console.OUT.println("Reset out i= "+i+" j = "+ j);
-		// 	swapVariables(i, j);
-		// }
-
-		return -1n;
-	}
-	
 	
 	/**
 	 *  CHECK_SOLUTION
