@@ -16,6 +16,7 @@ import x10.compiler.Pragma;
 import x10.io.File;
 import x10.io.FileReader;
 import x10.io.FileWriter;
+import x10.util.RailUtils;
 
 
 public class Main {
@@ -141,6 +142,10 @@ public class Main {
 			//Console.OUT.println(path+" "+fp.getName());
 		}
 		
+        //Sort
+        RailUtils.sort(execList);
+
+        
 		var samplesNb:Int = 0n;
 		// val mPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
 		// val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));

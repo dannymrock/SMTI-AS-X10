@@ -100,7 +100,7 @@ int main (int argc, char *argv[]) {
   // cout<<"PFT \t LFT \t NT \t LT \t LPL "<<endl;
   // totalWomen.PrintStats(size);
   // cout << "Total:"<<endl;
-  // cout<<"file \t PFT \t LFT \t NT \t LT \t LPL \t Max Tie Length \t minLengthMPL\t minLengthWPL"<<endl;
+   cout<<"file , PFT , LFT , NT , LT , LPL , MaxTieL , MaxTiePos , minLengthMPL ,  minLengthWPL"<<endl;
   cout <<file<<"\t";
   total.PrintStats(size*2);
   cout << "\t"<<max_tie<< "\t"<<pos_max_tie<< "\t"<< minLengthMPL<<"\t"<< minLengthWPL<<endl;
@@ -138,50 +138,78 @@ Stats processLine (stringstream &line){
   int accLT = 0;
   bool ftie = false;
   Stats l(0,0,0,0,0,INT_MAX);
-  while (getline(line, item, ' '))
-    {
-      iNb++;
-      int pref = atoi(item.c_str());
-      //cout<<pref<<" ";
-      if (pref < 0){
-	if (ltie == -1){
-	  //First Tie
-	  //cout<< "Pos First Tie: "<<iNb-1<<endl;
-	  l.posFirstTie = iNb-1;
-	  ltie = 2;
-	  ftie = true;
-	} 
-	else if (ltie == 0){
-	  //Another Tie
-	  ltie = 2;
-	}
-	else{
-	  ltie++;
-	}
+  int pref;
+
+  while (getline(line, item, ' ')){
+    iNb++;
+    pref = atoi(item.c_str());
+    //cout<<pref<<" ";
+    if (pref < 0){
+      if (ltie == -1){
+	//First Tie
+	//cout<< "Pos First Tie: "<<iNb-1<<endl;
+	l.posFirstTie = iNb-1;
+	ltie = 2;
+	ftie = true;
+      } 
+      else if (ltie == 0){
+	//Another Tie
+	ltie = 2;
       }
       else{
-	if (ftie){
-	  //End First Tie
-	  //cout<<"Length first tie= "<< ltie << endl;
-	  l.lengthFirstTie = ltie;
-	  if(ltie > max_tie){
-	    max_tie = ltie;
-	    pos_max_tie = iNb - ltie + 0.1;
-	  }
-	  accLT += ltie;
-	  ftie = false;
-	  ltie = 0; ntie++;
-	}else if (ltie > 1){
-	  //cout<<"Length tie= "<< ltie << endl;
-	  if(ltie > max_tie){
-	    max_tie = ltie;
-	    pos_max_tie = iNb - ltie;
-	  }
-	  accLT += ltie;
-	  ltie = 0; ntie++;
-	}
-      }  
+	ltie++;
+      }
     }
+    else{
+      if (ftie){
+	//End First Tie
+	//cout<<"Length first tie= "<< ltie << endl;
+	l.lengthFirstTie = ltie;
+	if(ltie > max_tie){
+	  max_tie = ltie;
+	  pos_max_tie = iNb - ltie + 0.1;
+	}
+	accLT += ltie;
+	ftie = false;
+	ltie = 0; ntie++;
+      }else if (ltie > 1){
+	//cout<<"Length tie= "<< ltie << endl;
+	if(ltie > max_tie){
+	  max_tie = ltie;
+	  pos_max_tie = iNb - ltie;
+	}
+	accLT += ltie;
+	ltie = 0; ntie++;
+      }
+    }  
+  }
+
+  // If the last entry in the pref. list is negative, It's necessariy
+  // to compute that tie.
+  if (pref < 0){ // commpute last tie
+    if (ftie){
+      //End First Tie
+      //cout<<"Length first tie= "<< ltie << endl;
+      l.lengthFirstTie = ltie;
+      if(ltie > max_tie){
+	max_tie = ltie;
+	pos_max_tie = iNb - ltie + 0.1;
+      }
+      accLT += ltie;
+      ftie = false;
+      ltie = 0; ntie++;
+    }else if (ltie > 1){
+      //cout<<"Length tie= "<< ltie << endl;
+      if(ltie > max_tie){
+	max_tie = ltie;
+	pos_max_tie = iNb - ltie;
+      }
+      accLT += ltie;
+      ltie = 0; ntie++;
+    }
+  }
+
+
   l.numberTies = ntie;
   l.lengthTies = accLT;
   l.lengthPL = iNb;
