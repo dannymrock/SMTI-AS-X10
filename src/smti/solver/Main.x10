@@ -42,6 +42,7 @@ public class Main {
 		    Option("d", "", "minimum permisible distance."),
 		    Option("p", "", "path"),
 		    Option("t", "", "target default 0"),
+		    Option("T", "", "Time out default 0"),
 		    Option("o", "", "output format: machine 0, info 1")
 		    ]);
 		
@@ -61,6 +62,7 @@ public class Main {
 		var path:String	= opts("-p", "");
 		val outFormat	= opts("-o", 1n);
         val target	    = opts("-t", 0n);
+        val maxTime     = opts("-T", 0);
 		
 		var vectorSize:Long=0;
 		
@@ -69,10 +71,10 @@ public class Main {
 		Console.OUT.println("Target: "+(target >= 0n ? "to get equal":"to exceed")+" cost = "+ Math.abs(target));
 		
 		if (outFormat == 0n){
-			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team Recv,intra-Team Send,inter-Team,minDistance,poolsize,places,nodes_per_team,seed");
+			Console.OUT.println("Path,size,samples,mode,probChangeVector,intra-Team Recv,intra-Team Send,inter-Team,minDistance,poolsize,places,nodes_per_team,seed,timeout");
 			Console.OUT.println(path+","+size+","+testNo+","+(solverMode==0n ?"seq":"parallel")+","+changeProb+","+
 					intraTIRecv+","+intraTISend+","+interTI+","+minDistance+","+poolSize+","+Place.MAX_PLACES+","+nodesPTeam
-					+","+inSeed+"\n");
+					+","+inSeed+","+maxTime+"\n");
 		}
 		else if(outFormat == 1n){
 			Console.OUT.println("Size: "+size+"\nNumber of repetitions: "+testNo+
@@ -80,7 +82,7 @@ public class Main {
 							"\nProbability to Change Vector: "+changeProb+"\nIntra-Team Comm. inteval Recv: "+intraTIRecv+" iterations"+
 							"\nIntra-Team Comm. inteval Send: "+intraTISend+" iterations"+
 							"\nInter-Team Comm. inteval: "+interTI+" ms"+"\nMinimum permissible distance: "+minDistance+
-							"\nPool Size: "+poolSize);
+							"\nPool Size: "+poolSize+"\nMax. time: "+maxTime);
 
 			Console.OUT.println("Using multi-walks with "+Place.MAX_PLACES+" Places");
 			Console.OUT.println("There are "+Place.MAX_PLACES/nodesPTeam+" teams each one with "+nodesPTeam+" explorer places. "+
@@ -98,7 +100,7 @@ public class Main {
 		val solvers:PlaceLocalHandle[ParallelSolverI(vectorSz)];	
 		solvers = PlaceLocalHandle.make[ParallelSolverI(vectorSz)](PlaceGroup.WORLD, 
 				()=>new PlacesMultiWalks(vectorSz, intraTIRecv, intraTISend, interTI, poolSize, nodesPTeam,
-						changeProb, minDistance, target) as ParallelSolverI(vectorSz));
+						changeProb, minDistance, target, maxTime) as ParallelSolverI(vectorSz));
 			
 		if (outFormat == 0n){
 			Console.OUT.println("file,count,time(s),iters,place,local_Min,swaps,resets,same/iter,restarts,blocking_pairs,singles,Changes,force_restart,solution,walltime");

@@ -17,7 +17,7 @@ import x10.util.concurrent.AtomicBoolean;
  */
 // param t target 
 // param b beat flag
-public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int, b:Boolean) {
+public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int, b:Boolean, mTime:Long) {
 
 	val target = t;
 	val beat = b;
@@ -91,6 +91,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int
 	// 	//kill=false;
 	// }
 	
+	val maxTime = mTime;
 	
 	public def setSeed(seed:Long){
 		this.seed = seed;
@@ -107,6 +108,8 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int
 	public def solve( csp_ : SMTIModel{self.sz==this.sz} ) : Int { //
 		
 		csp_.setParameters(solverP);
+
+
 		
 		//nb_var_to_reset = (((size * solverP.resetPercent) + (100) - 1) / (100));
 		if (solverP.nbVarToReset == -1n){
@@ -152,7 +155,8 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int
 		//Console.OUT.println("initial bestCost="+bestCost);
 		
 		bestSent = false;
-		
+        var initialTime:Long = System.nanoTime();
+
 		while( totalCost != 0n ){
 			// if (bestCost < bestOfBest)
 			// 	bestOfBest = bestCost;
@@ -268,6 +272,18 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int
 	 			}
 	 		}
 	 		
+	        /**
+	         *  Time out
+	         */
+	       
+	        if(maxTime > 0){
+	           val eTime = System.nanoTime() - initialTime; 
+	           if(eTime/1e6 > maxTime){ //comparison in miliseconds
+	              Console.OUT.println(here+": Time Out");
+	              break;
+	           }
+	        }
+	 
 	 		if( solver.intraTISend() != 0n && nbIter % solver.intraTISend() == 0n){        //here.id as Int ){
 	 			if(!bestSent){ 
 	 				solver.communicate( bestCost, bestConf as Valuation(sz));

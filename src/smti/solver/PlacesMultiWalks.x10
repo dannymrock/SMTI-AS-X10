@@ -69,11 +69,12 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     
     val target:Int;
     val beat:Boolean;
+    val maxTime:Long;
     /**
      * 	Constructor of the class
      */
     public def this(vectorSize:Long, intraTIRecv : Int, intraTISend : Int, interTI : Long, ps : Int,
-    		npT : Int, changeProb:Int, minDistance:Double, target:Int){
+    		npT : Int, changeProb:Int, minDistance:Double, target:Int, maxTime:Long){
     	property(vectorSize,ps);
     	this.intraTIRecv = intraTIRecv;
     	this.intraTISend = intraTISend;
@@ -83,6 +84,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	this.changeProb = changeProb;
     	interTeamInterval = interTI;
     	this.minDistance = minDistance;
+    	this.maxTime = maxTime;
     	
     	if(target < 0n){
     		beat = true;
@@ -91,6 +93,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     		beat=false;
             this.target = target;
     	}
+    	
     	
     }
     //var solvers:PlaceLocalHandle[ParallelSolverI(sz)];
@@ -104,7 +107,7 @@ public class PlacesMultiWalks(sz:Long,poolSize:Int) implements ParallelSolverI {
     	val ss = st() as ParallelSolverI(sz);
     	val size = sz as Int;
     	var nsize:Int = size;
-    	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss, target, beat);
+    	solver = new ASSolverPermut(sz, nsize, /*seed,*/ ss, target, beat, maxTime);
     	commM = new CommManager(sz, 0n , st, intraTIRecv, intraTISend ,0n, poolSize, nTeams, changeProb);
     }
     	
