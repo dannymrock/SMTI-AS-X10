@@ -278,7 +278,7 @@ public class ASSolverPermut(sz:Long, size:Int, solver:ParallelSolverI(sz), t:Int
 	       
 	        if(maxTime > 0){
 	           val eTime = System.nanoTime() - initialTime; 
-	           if(eTime/1e6 > maxTime){ //comparison in miliseconds
+	           if(eTime/1e6 >= maxTime){ //comparison in miliseconds
 	              Console.OUT.println(here+": Time Out");
 	              break;
 	           }

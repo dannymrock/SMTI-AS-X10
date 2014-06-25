@@ -153,15 +153,18 @@ public class Main {
 		// val wPref:Rail[Rail[Int]] = new Rail[Rail[Int]](vectorSz, (Long) => new Rail[Int](vectorSz,0n));
 		
 		for (file in execList){
+			
+			var loadTime:Long = -System.nanoTime();
+			//Load first line wtith headers size p1 p2
+			val filep = new File(path+"/"+file);//new File(file);//
+			if (filep.isDirectory()) continue;
+			
 			if(outFormat == 1n){
 				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
 				Console.OUT.println("\n--   Solving "+file+" "+testNo+" times");
 				Console.OUT.println("|--------------------------------------------------------------------------------------------------------------------|");
 			}
-			var loadTime:Long = -System.nanoTime();
-			//Load first line wtith headers size p1 p2
-			val filep = new File(path+"/"+file);//new File(file);//
-			if (filep.isDirectory()) continue;
+			
 			val fr = filep.openRead();
 			val fLine = fr.readLine(); //get first line
 			val header = parseFirstLine(fLine);
